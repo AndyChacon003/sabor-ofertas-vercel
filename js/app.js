@@ -5,6 +5,7 @@ let currentSort = "recommended";
 let searchQuery = "";
 let favorites = new Set();
 let currentUser = null;
+let isRegisterMode = false;
 
 let categories = [];
 let dealsData = [];
@@ -21,7 +22,7 @@ window.onload = async function () {
     try {
         const [catsResponse, dealsResponse] = await Promise.all([
             fetch('/api/categories'),
-            fetch('/api/deals')
+            fetch('/api/platillos') // Cargado directamente desde tu base de datos en Neon
         ]);
 
         categories = await catsResponse.json();
@@ -29,7 +30,7 @@ window.onload = async function () {
 
         renderCategories();
 
-        // Cargar platillos externos de API de Comida Masiva (TheMealDB)
+        // Cargar platillos externos de API de Comida Masiva (TheMealDB) para mayor variedad
         await fetchExternalFoodAPI();
 
         renderFlashDeals();
@@ -231,7 +232,7 @@ function startCountdowns() {
     }, 1000);
 }
 
-// Funciones de Inicio de Sesión
+// Funciones de Autenticación (Conectadas a la API y Neon)
 function toggleAuthModal() {
     const modal = document.getElementById('auth-modal');
     if (modal.classList.contains('hidden')) {
@@ -243,18 +244,64 @@ function toggleAuthModal() {
     }
 }
 
-function handleLogin() {
-    const name = document.getElementById('login-name').value.trim();
-    const email = document.getElementById('login-email').value.trim();
-    if (!name || !email) {
-        showToast('⚠️ Por favor completa tu nombre y correo.');
+function switchAuthMode(mode) {
+    isRegisterMode = (mode === 'register');
+    const nameField = document.getElementById('name-field-container');
+    const title = document.getElementById('auth-modal-title');
+    const submitBtn = document.getElementById('auth-submit-btn');
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+
+    if (isRegisterMode) {
+        nameField.classList.remove('hidden');
+        title.innerText = 'Crear Cuenta';
+        submitBtn.innerText = 'Registrarse';
+        tabRegister.className = 'flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all';
+        tabLogin.className = 'flex-1 py-2 rounded-lg text-slate-500 transition-all';
+    } else {
+        nameField.classList.add('hidden');
+        title.innerText = 'Iniciar Sesión';
+        submitBtn.innerText = 'Acceder';
+        tabLogin.className = 'flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all';
+        tabRegister.className = 'flex-1 py-2 rounded-lg text-slate-500 transition-all';
+    }
+}
+
+async function submitAuthForm() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+    const name = document.getElementById('auth-name').value.trim();
+
+    if (!email || !password || (isRegisterMode && !name)) {
+        showToast('⚠️ Por favor completa todos los campos.');
         return;
     }
-    currentUser = { name, email };
-    localStorage.setItem('sabor_user', JSON.stringify(currentUser));
-    updateAuthUI();
-    toggleAuthModal();
-    showToast(`👋 ¡Bienvenido de nuevo, ${name}!`);
+
+    const endpoint = isRegisterMode ? '/api/register' : '/api/login';
+    const payload = isRegisterMode ? { nombre: name, correo: email, password } : { correo: email, password };
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentUser = data.user;
+            localStorage.setItem('sabor_user', JSON.stringify(currentUser));
+            updateAuthUI();
+            toggleAuthModal();
+            showToast(isRegisterMode ? '🎉 ¡Cuenta creada con éxito!' : `👋 ¡Bienvenido de nuevo, ${currentUser.name}!`);
+        } else {
+            showToast(`❌ ${data.message || 'Ocurrió un error.'}`);
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('❌ Error de conexión con el servidor.');
+    }
 }
 
 function handleLogout() {
@@ -336,7 +383,7 @@ function copyCouponCode() {
 
 function markAsRedeemed() {
     const scheduleSelect = document.getElementById('delivery-schedule-select');
-    const scheduleText = scheduleSelect.options[scheduleSelect.selectedIndex].text;
+    const scheduleText = scheduleSelect ? scheduleSelect.options[scheduleSelect.selectedIndex].text : 'Entrega Inmediata';
     closeCouponModal();
     showToast(`🎉 ¡Pedido programado exitosamente! (${scheduleText})`);
 }
