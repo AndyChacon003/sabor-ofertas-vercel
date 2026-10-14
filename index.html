@@ -22,64 +22,78 @@
 
 <body class="bg-slate-50 text-slate-900 font-sans pb-20">
 
-    <header class="p-4 bg-white shadow-sm sticky top-0 z-40">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-extrabold text-brand-600">SaborOfertas</h1>
-            <div class="flex gap-3 items-center">
-                <!-- Botón de Inicio de Sesión / Perfil -->
-                <button onclick="toggleAuthModal()" id="auth-btn"
-                    class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full text-xs font-bold transition-colors">
-                    <i data-lucide="user" class="w-4 h-4"></i>
-                    <span id="auth-btn-text">Iniciar Sesión</span>
-                </button>
-                <button onclick="toggleLocationModal()"
-                    class="flex items-center gap-1 text-sm font-semibold text-slate-600">
-                    <i data-lucide="map-pin" class="w-4 h-4"></i>
-                    <span id="current-location-text">Morelia, Mich.</span>
-                </button>
-                <button onclick="triggerApiSync()">
-                    <i id="sync-icon" data-lucide="refresh-cw" class="w-5 h-5 text-slate-600"></i>
-                </button>
-                <button onclick="toggleFavoritesDrawer()" class="relative">
-                    <i data-lucide="heart" class="w-6 h-6 text-slate-600"></i>
-                    <span id="fav-counter"
-                        class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-1.5 rounded-full font-bold">0</span>
-                </button>
+    <!-- Header centrado y alineado con el contenido principal -->
+    <header class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-slate-100">
+        <div class="max-w-5xl mx-auto p-4 space-y-3">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-extrabold text-brand-600 tracking-tight flex items-center gap-1.5">
+                    <span>SaborOfertas</span>
+                </h1>
+
+                <div class="flex gap-2 sm:gap-3 items-center">
+                    <!-- Botón de Inicio de Sesión / Perfil -->
+                    <button onclick="toggleAuthModal()" id="auth-btn"
+                        class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full text-xs font-bold transition-colors">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                        <span id="auth-btn-text">Iniciar Sesión</span>
+                    </button>
+                    <button onclick="toggleLocationModal()"
+                        class="flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-brand-500"></i>
+                        <span id="current-location-text">Morelia, Mich.</span>
+                    </button>
+                    <button onclick="triggerApiSync()" title="Sincronizar ofertas"
+                        class="p-1.5 hover:bg-slate-100 rounded-full transition-colors">
+                        <i id="sync-icon" data-lucide="refresh-cw" class="w-4 h-4 text-slate-600"></i>
+                    </button>
+                    <button onclick="toggleFavoritesDrawer()"
+                        class="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors">
+                        <i data-lucide="heart" class="w-5 h-5 text-slate-600"></i>
+                        <span id="fav-counter"
+                            class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full font-bold shadow-sm">0</span>
+                    </button>
+                </div>
             </div>
-        </div>
-        <div class="relative">
-            <input type="text" id="search-input" placeholder="Buscar tacos, pizza, sushi, recetas..."
-                class="w-full pl-10 pr-10 py-3 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 transition-all">
-            <i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i>
-            <button id="clear-search-btn" onclick="clearSearch()"
-                class="hidden absolute right-3 top-3.5 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+
+            <!-- Barra de Búsqueda Centrada y con Ancho Limitado -->
+            <div class="flex justify-center">
+                <div class="relative w-full max-w-xl">
+                    <input type="text" id="search-input" placeholder="Buscar tacos, pizza, sushi, hamburguesas..."
+                        class="w-full pl-10 pr-10 py-2.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white rounded-2xl outline-none focus:ring-2 focus:ring-brand-500 border border-transparent focus:border-brand-500/20 text-sm transition-all shadow-inner">
+                    <i data-lucide="search" class="absolute left-3.5 top-3 w-4 h-4 text-slate-400"></i>
+                    <button id="clear-search-btn" onclick="clearSearch()"
+                        class="hidden absolute right-3.5 top-3 text-slate-400 hover:text-slate-600"><i data-lucide="x"
+                            class="w-4 h-4"></i></button>
+                </div>
+            </div>
         </div>
         <span id="mobile-location-text" class="hidden">Morelia, Mich.</span>
     </header>
 
     <main class="p-4 max-w-5xl mx-auto space-y-8">
         <section>
-            <h2 class="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">Categorías</h2>
+            <h2 class="text-xs font-extrabold text-slate-400 mb-3 uppercase tracking-wider">Categorías</h2>
             <div id="category-chips" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"></div>
         </section>
 
         <section class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <button class="filter-pill active px-3 py-1.5 rounded-full font-semibold bg-slate-900 text-white shadow-sm"
+            <button
+                class="filter-pill active px-3.5 py-1.5 rounded-full font-semibold text-xs bg-slate-900 text-white shadow-sm"
                 data-type="all" onclick="setFilterType('all')">Todas</button>
             <button
-                class="filter-pill px-3 py-1.5 rounded-full font-medium bg-white text-slate-700 border border-slate-200"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                 data-type="2x1" onclick="setFilterType('2x1')">2x1</button>
             <button
-                class="filter-pill px-3 py-1.5 rounded-full font-medium bg-white text-slate-700 border border-slate-200"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                 data-type="30plus" onclick="setFilterType('30plus')">+30% Dto</button>
             <button
-                class="filter-pill px-3 py-1.5 rounded-full font-medium bg-white text-slate-700 border border-slate-200"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                 data-type="shipping" onclick="setFilterType('shipping')">Envío Gratis</button>
             <button
-                class="filter-pill px-3 py-1.5 rounded-full font-medium bg-white text-slate-700 border border-slate-200"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                 data-type="flash" onclick="setFilterType('flash')">Flash</button>
             <button
-                class="filter-pill px-3 py-1.5 rounded-full font-medium bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1 hover:bg-amber-100"
                 data-type="api" onclick="setFilterType('api')"><i data-lucide="sparkles"
                     class="w-3.5 h-3.5 text-amber-500"></i> Menú Gourmet</button>
         </section>
@@ -87,7 +101,8 @@
         <section>
             <h2 class="text-sm font-bold mb-3 flex items-center gap-2 text-slate-800"><i data-lucide="zap"
                     class="w-4 h-4 text-yellow-500 fill-yellow-500"></i> Ofertas Flash Exclusivas</h2>
-            <div id="flash-deals-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-900 p-4 rounded-2xl">
+            <div id="flash-deals-container"
+                class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-900 p-4 rounded-2xl shadow-lg">
             </div>
         </section>
 
@@ -96,7 +111,7 @@
                 <h2 class="text-lg font-bold text-slate-800">Ofertas y Platillos Disponibles (<span
                         id="deals-count-badge">0</span>)</h2>
                 <select onchange="handleSortChange(this.value)"
-                    class="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-medium outline-none">
+                    class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
                     <option value="recommended">Recomendados</option>
                     <option value="discount">Mayor descuento</option>
                     <option value="distance">Más cercanos</option>
