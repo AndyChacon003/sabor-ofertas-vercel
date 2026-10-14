@@ -22,7 +22,7 @@ window.onload = async function () {
     try {
         const [catsResponse, dealsResponse] = await Promise.all([
             fetch('/api/categories'),
-            fetch('/api/platillos') // Cargado directamente desde tu base de datos en Neon
+            fetch('/api/platillos') // Cargado desde tu base de datos en Neon
         ]);
 
         categories = await catsResponse.json();
@@ -30,7 +30,7 @@ window.onload = async function () {
 
         renderCategories();
 
-        // Cargar platillos externos de API de Comida Masiva (TheMealDB) para mayor variedad
+        // Cargar platillos externos (Menú Gourmet / Internacional)
         await fetchExternalFoodAPI();
 
         renderFlashDeals();
@@ -49,7 +49,7 @@ window.onload = async function () {
     });
 };
 
-// Integración de API externa masiva de comida (TheMealDB)
+// Integración de API externa de comida (TheMealDB adaptada a Menú Gourmet)
 async function fetchExternalFoodAPI() {
     try {
         const res = await fetch('https://www.themealdb.com/api/json/v1/1/search.php?s=');
@@ -61,7 +61,7 @@ async function fetchExternalFoodAPI() {
                 restaurant: `${meal.strArea} Kitchen (${meal.strCategory})`,
                 category: 'saludable',
                 image: meal.strMealThumb,
-                badge: 'GLOBAL API',
+                badge: 'GOURMET', // Etiqueta profesional en lugar de Global API
                 discountType: index % 2 === 0 ? 'shipping' : '30plus',
                 originalPrice: 220 + (index * 5),
                 discountPrice: 150 + (index * 3),
@@ -70,10 +70,10 @@ async function fetchExternalFoodAPI() {
                 distance: parseFloat((1.2 + (index * 0.3)).toFixed(1)),
                 expiresIn: 3600 * 6,
                 isFlash: index < 2,
-                couponCode: 'GLOBAL' + meal.idMeal.slice(-4),
-                apiSource: 'TheMealDB Global API',
-                address: 'Sucursal Digital Internacional',
-                description: meal.strInstructions ? meal.strInstructions.substring(0, 140) + '...' : 'Platillo internacional preparado al momento.',
+                couponCode: 'GOURMET' + meal.idMeal.slice(-4),
+                apiSource: 'Selección Internacional SaborOfertas', // Texto limpio y comercial
+                address: 'Sucursal Digital Autorizada',
+                description: meal.strInstructions ? meal.strInstructions.substring(0, 140) + '...' : 'Platillo internacional preparado al momento por chefs expertos.',
                 terms: 'Válido para entrega a domicilio o recoger en sucursal participante.',
                 isExternalAPI: true
             }));
@@ -500,11 +500,11 @@ function selectCity(city) {
 function triggerApiSync() {
     const icon = document.getElementById('sync-icon');
     icon.classList.add('animate-spin');
-    showToast('🔄 Conectando con APIs...');
+    showToast('🔄 Conectando con Red de Restaurantes...');
 
     setTimeout(() => {
         icon.classList.remove('animate-spin');
-        const apiSources = ['Rappi API v3', 'UberEats API', 'Google Places + POS', 'Kenia POS Cloud'];
+        const apiSources = ['Rappi Partner Network', 'UberEats Direct', 'Google Places + POS', 'SaborOfertas Cloud'];
         const randomSource = apiSources[Math.floor(Math.random() * apiSources.length)];
 
         const newDeal = {
@@ -513,7 +513,7 @@ function triggerApiSync() {
             restaurant: 'El Rinconcito Michoacano',
             category: 'tacos',
             image: 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80',
-            badge: 'NUEVO API', discountType: '30plus', originalPrice: 140, discountPrice: 98,
+            badge: 'EXCLUSIVO', discountType: '30plus', originalPrice: 140, discountPrice: 98,
             rating: 5.0, reviews: 12, distance: 0.4, expiresIn: 3600 * 3, isFlash: true,
             couponCode: 'SYNSABOR' + Math.floor(Math.random() * 900 + 100),
             apiSource: randomSource, address: 'Calle Aquiles Serdán #45',
