@@ -4,11 +4,20 @@ let selectedFilterType = "all";
 let currentSort = "recommended";
 let searchQuery = "";
 let favorites = new Set();
+let currentUser = null;
 
 let categories = [];
 let dealsData = [];
+let apiGlobalMeals = [];
 
 window.onload = async function () {
+    // Cargar sesión guardada si existe
+    const savedUser = localStorage.getItem('sabor_user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        updateAuthUI();
+    }
+
     try {
         const [catsResponse, dealsResponse] = await Promise.all([
             fetch('/api/categories'),
@@ -19,6 +28,10 @@ window.onload = async function () {
         dealsData = await dealsResponse.json();
 
         renderCategories();
+
+        // Cargar platillos externos de API de Comida Masiva (TheMealDB)
+        await fetchExternalFoodAPI();
+
         renderFlashDeals();
         renderDealsGrid();
         startCountdowns();
@@ -34,6 +47,41 @@ window.onload = async function () {
         renderDealsGrid();
     });
 };
+
+// Integración de API externa masiva de comida (TheMealDB)
+async function fetchExternalFoodAPI() {
+    try {
+        const res = await fetch('https://www.themealdb.com/api/json/v1/1/search.php?s=');
+        const data = await res.json();
+        if (data && data.meals) {
+            apiGlobalMeals = data.meals.map((meal, index) => ({
+                id: 'meal-api-' + meal.idMeal,
+                title: meal.strMeal,
+                restaurant: `${meal.strArea} Kitchen (${meal.strCategory})`,
+                category: 'saludable',
+                image: meal.strMealThumb,
+                badge: 'GLOBAL API',
+                discountType: index % 2 === 0 ? 'shipping' : '30plus',
+                originalPrice: 220 + (index * 5),
+                discountPrice: 150 + (index * 3),
+                rating: 4.8,
+                reviews: 45 + index,
+                distance: parseFloat((1.2 + (index * 0.3)).toFixed(1)),
+                expiresIn: 3600 * 6,
+                isFlash: index < 2,
+                couponCode: 'GLOBAL' + meal.idMeal.slice(-4),
+                apiSource: 'TheMealDB Global API',
+                address: 'Sucursal Digital Internacional',
+                description: meal.strInstructions ? meal.strInstructions.substring(0, 140) + '...' : 'Platillo internacional preparado al momento.',
+                terms: 'Válido para entrega a domicilio o recoger en sucursal participante.',
+                isExternalAPI: true
+            }));
+            dealsData = [...dealsData, ...apiGlobalMeals];
+        }
+    } catch (err) {
+        console.error("No se pudo cargar la API externa de comida:", err);
+    }
+}
 
 function renderCategories() {
     const container = document.getElementById('category-chips');
@@ -87,6 +135,7 @@ function renderDealsGrid() {
         if (selectedFilterType === '30plus' && deal.discountType !== '30plus') return false;
         if (selectedFilterType === 'shipping' && deal.discountType !== 'shipping') return false;
         if (selectedFilterType === 'flash' && !deal.isFlash) return false;
+        if (selectedFilterType === 'api' && !deal.isExternalAPI) return false;
 
         if (searchQuery) {
             const matchTitle = deal.title.toLowerCase().includes(searchQuery);
@@ -182,6 +231,63 @@ function startCountdowns() {
     }, 1000);
 }
 
+// Funciones de Inicio de Sesión
+function toggleAuthModal() {
+    const modal = document.getElementById('auth-modal');
+    if (modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function handleLogin() {
+    const name = document.getElementById('login-name').value.trim();
+    const email = document.getElementById('login-email').value.trim();
+    if (!name || !email) {
+        showToast('⚠️ Por favor completa tu nombre y correo.');
+        return;
+    }
+    currentUser = { name, email };
+    localStorage.setItem('sabor_user', JSON.stringify(currentUser));
+    updateAuthUI();
+    toggleAuthModal();
+    showToast(`👋 ¡Bienvenido de nuevo, ${name}!`);
+}
+
+function handleLogout() {
+    currentUser = null;
+    localStorage.removeItem('sabor_user');
+    updateAuthUI();
+    toggleAuthModal();
+    showToast('Sesión cerrada correctamente.');
+}
+
+function updateAuthUI() {
+    const btnText = document.getElementById('auth-btn-text');
+    const formContainer = document.getElementById('auth-form-container');
+    const userInfo = document.getElementById('auth-user-info');
+    const modalTitle = document.getElementById('auth-modal-title');
+
+    if (currentUser) {
+        btnText.innerText = currentUser.name.split(' ')[0];
+        modalTitle.innerText = 'Mi Cuenta';
+        formContainer.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        document.getElementById('display-user-name').innerText = currentUser.name;
+        document.getElementById('display-user-email').innerText = currentUser.email;
+        const initials = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        document.getElementById('user-avatar-initials').innerText = initials;
+    } else {
+        btnText.innerText = 'Iniciar Sesión';
+        modalTitle.innerText = 'Iniciar Sesión';
+        formContainer.classList.remove('hidden');
+        userInfo.classList.add('hidden');
+    }
+}
+
 function openCouponModal(dealId) {
     const deal = dealsData.find(d => d.id === dealId);
     if (!deal) return;
@@ -229,8 +335,10 @@ function copyCouponCode() {
 }
 
 function markAsRedeemed() {
+    const scheduleSelect = document.getElementById('delivery-schedule-select');
+    const scheduleText = scheduleSelect.options[scheduleSelect.selectedIndex].text;
     closeCouponModal();
-    showToast('🎉 ¡Cupón listo! Muéstralo en la caja del restaurante.');
+    showToast(`🎉 ¡Pedido programado exitosamente! (${scheduleText})`);
 }
 
 function toggleFavorite(event, dealId) {
