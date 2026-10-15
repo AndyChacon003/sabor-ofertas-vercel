@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: true }
+    ssl: { rejectUnauthorized: false }
 });
 
 export default async function handler(req, res) {
@@ -12,6 +12,8 @@ export default async function handler(req, res) {
 
     try {
         const result = await pool.query('SELECT * FROM platillos ORDER BY id DESC');
+
+        // Mapeamos los campos para que coincidan con las propiedades que lee tu app.js
         const platillosFormateados = result.rows.map(row => ({
             id: 'neon-' + row.id,
             title: row.titulo,
@@ -35,7 +37,7 @@ export default async function handler(req, res) {
 
         return res.status(200).json(platillosFormateados);
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ success: false, message: 'Error al consultar los platillos en la base de datos.' });
+        console.error("Error al consultar los platillos en la base de datos:", err);
+        return res.status(500).json({ success: false, message: err.message });
     }
 }
