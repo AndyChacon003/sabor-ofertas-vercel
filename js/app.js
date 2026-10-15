@@ -12,11 +12,24 @@ let dealsData = [];
 let apiGlobalMeals = [];
 
 window.onload = async function () {
-    // Cargar sesión guardada si existe
+    // Cargar sesión guardada si existe y validarla de forma segura
     const savedUser = localStorage.getItem('sabor_user');
     if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        updateAuthUI();
+        try {
+            const parsed = JSON.parse(savedUser);
+            // Soportar tanto 'name' como 'nombre' por compatibilidad de datos viejos
+            const userName = parsed.name || parsed.nombre;
+            const userEmail = parsed.email || parsed.correo;
+
+            if (userName && userEmail) {
+                currentUser = { name: userName, email: userEmail };
+                updateAuthUI();
+            } else {
+                localStorage.removeItem('sabor_user');
+            }
+        } catch (e) {
+            localStorage.removeItem('sabor_user');
+        }
     }
 
     try {
@@ -61,7 +74,7 @@ async function fetchExternalFoodAPI() {
                 restaurant: `${meal.strArea} Kitchen (${meal.strCategory})`,
                 category: 'saludable',
                 image: meal.strMealThumb,
-                badge: 'GOURMET', // Etiqueta profesional en lugar de Global API
+                badge: 'GOURMET',
                 discountType: index % 2 === 0 ? 'shipping' : '30plus',
                 originalPrice: 220 + (index * 5),
                 discountPrice: 150 + (index * 3),
@@ -71,7 +84,7 @@ async function fetchExternalFoodAPI() {
                 expiresIn: 3600 * 6,
                 isFlash: index < 2,
                 couponCode: 'GOURMET' + meal.idMeal.slice(-4),
-                apiSource: 'Selección Internacional SaborOfertas', // Texto limpio y comercial
+                apiSource: 'Selección Internacional SaborOfertas',
                 address: 'Sucursal Digital Autorizada',
                 description: meal.strInstructions ? meal.strInstructions.substring(0, 140) + '...' : 'Platillo internacional preparado al momento por chefs expertos.',
                 terms: 'Válido para entrega a domicilio o recoger en sucursal participante.',
@@ -232,7 +245,7 @@ function startCountdowns() {
     }, 1000);
 }
 
-// Funciones de Autenticación (Conectadas a la API y Neon)
+// Funciones de Autenticación
 function toggleAuthModal() {
     const modal = document.getElementById('auth-modal');
     if (modal.classList.contains('hidden')) {
@@ -318,7 +331,7 @@ function updateAuthUI() {
     const userInfo = document.getElementById('auth-user-info');
     const modalTitle = document.getElementById('auth-modal-title');
 
-    if (currentUser) {
+    if (currentUser && currentUser.name) {
         btnText.innerText = currentUser.name.split(' ')[0];
         modalTitle.innerText = 'Mi Cuenta';
         formContainer.classList.add('hidden');

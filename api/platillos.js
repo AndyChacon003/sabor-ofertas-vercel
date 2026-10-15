@@ -13,7 +13,6 @@ export default async function handler(req, res) {
     try {
         const result = await pool.query('SELECT * FROM platillos ORDER BY id DESC');
 
-        // Mapeamos los campos para que coincidan con las propiedades que lee tu app.js
         const platillosFormateados = result.rows.map(row => ({
             id: 'neon-' + row.id,
             title: row.titulo,
