@@ -9,18 +9,17 @@ let isRegisterMode = false;
 
 let categories = [];
 let dealsData = [];
-let apiLocalMeals = [];
+let cart = [];
+let currentViewingDealId = null;
+let pendingVerificationEmail = null;
 
 window.onload = async function () {
     const savedUser = localStorage.getItem('sabor_user');
     if (savedUser) {
         try {
             const parsed = JSON.parse(savedUser);
-            const userName = parsed.name || parsed.nombre;
-            const userEmail = parsed.email || parsed.correo;
-
-            if (userName && userEmail) {
-                currentUser = { name: userName, email: userEmail };
+            if (parsed.name && parsed.email) {
+                currentUser = parsed;
                 updateAuthUI();
             } else {
                 localStorage.removeItem('sabor_user');
@@ -40,8 +39,6 @@ window.onload = async function () {
         dealsData = await dealsResponse.json();
 
         renderCategories();
-
-        // Inyectar datos locales simulando API de red de Morelia
         await fetchLocalMoreliaAPI();
 
         renderFlashDeals();
@@ -60,7 +57,6 @@ window.onload = async function () {
     });
 };
 
-// Simulador de API para traer negocios de Morelia
 async function fetchLocalMoreliaAPI() {
     const moreliaLocalData = [
         { id: 'mrl-1', title: 'Tacos Pastor y Suadero (Orden)', restaurant: 'Taquería El Infierno', category: 'tacos', image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80', badge: 'MÁS PEDIDO', discountType: '2x1', originalPrice: 180, discountPrice: 90, rating: 4.8, reviews: 3100, distance: 1.1, expiresIn: 3600 * 5, isFlash: true, couponCode: 'INF2X1', apiSource: 'Morelia Local Network', address: 'Av. Madero Poniente', description: 'Nuestros clásicos tacos al pastor con doble tortilla, piña, cilantro y cebolla.', terms: 'Aplica en todas las sucursales.', isExternalAPI: true },
@@ -72,16 +68,12 @@ async function fetchLocalMoreliaAPI() {
     dealsData = [...dealsData, ...moreliaLocalData];
 }
 
-// Función GPS Real
 function requestGeolocation() {
     showToast('📍 Obteniendo ubicación GPS...');
 
     if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-
                 toggleLocationModal();
                 document.getElementById('current-location-text').innerText = "Tu ubicación";
                 document.getElementById('mobile-location-text').innerText = "Tu ubicación";
@@ -89,7 +81,6 @@ function requestGeolocation() {
 
                 showToast('✅ Ubicación detectada. Ordenando por cercanía.');
 
-                // Recalculando distancias dinámicamente para simular el GPS
                 dealsData = dealsData.map(deal => {
                     deal.distance = parseFloat((Math.random() * 2.1 + 0.1).toFixed(1));
                     return deal;
@@ -113,6 +104,283 @@ function requestGeolocation() {
     }
 }
 
+function openCouponModal(dealId) {
+    const deal = dealsData.find(d => d.id === dealId);
+    if (!deal) return;
+
+    currentViewingDealId = deal.id;
+
+    document.getElementById('modal-title').innerText = deal.title;
+    document.getElementById('modal-restaurant').innerHTML = `<i data-lucide="store" class="w-3.5 h-3.5"></i> ${deal.restaurant}`;
+    document.getElementById('modal-img').src = deal.image;
+    document.getElementById('modal-badge').innerText = deal.badge;
+    document.getElementById('modal-price-discount').innerText = `$${deal.discountPrice} MXN`;
+    document.getElementById('modal-price-original').innerText = `$${deal.originalPrice}`;
+    document.getElementById('modal-description').innerText = deal.description;
+
+    // Lógica del Mapa Embebido de Google Maps
+    const mapQuery = encodeURIComponent(`${deal.restaurant}, ${deal.address}, Morelia, Michoacán`);
+    document.getElementById('modal-map-iframe').src = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+
+    // Lógica del QR Funcional
+    const qrDataObj = {
+        ordenId: deal.id,
+        restaurante: deal.restaurant,
+        cliente: currentUser ? currentUser.name : "Invitado"
+    };
+    const qrString = encodeURIComponent(JSON.stringify(qrDataObj));
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrString}`;
+    document.getElementById('modal-qr-container').innerHTML = `<img src="${qrUrl}" alt="QR Code" class="w-32 h-32 object-contain">`;
+
+    document.getElementById('coupon-modal').classList.remove('hidden');
+    document.getElementById('coupon-modal').classList.add('flex');
+    lucide.createIcons();
+}
+
+function closeCouponModal() {
+    document.getElementById('coupon-modal').classList.add('hidden');
+    document.getElementById('coupon-modal').classList.remove('flex');
+}
+
+// FUNCIONES DEL CARRITO
+function toggleCartDrawer() {
+    const drawer = document.getElementById('cart-drawer');
+    if (drawer.classList.contains('hidden')) {
+        renderCart();
+        drawer.classList.remove('hidden');
+        drawer.classList.add('flex');
+    } else {
+        drawer.classList.add('hidden');
+        drawer.classList.remove('flex');
+    }
+}
+
+function addToCartFromModal() {
+    if (!currentViewingDealId) return;
+    const deal = dealsData.find(d => d.id === currentViewingDealId);
+
+    const existingItem = cart.find(item => item.id === deal.id);
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ ...deal, quantity: 1 });
+    }
+
+    closeCouponModal();
+    updateCartCounter();
+    showToast(`🛒 Agregado: ${deal.title}`);
+}
+
+function removeFromCart(dealId) {
+    cart = cart.filter(item => item.id !== dealId);
+    renderCart();
+    updateCartCounter();
+}
+
+function updateCartCounter() {
+    const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+    document.getElementById('cart-counter').innerText = totalItems;
+}
+
+function renderCart() {
+    const list = document.getElementById('cart-items-list');
+    let subtotal = 0;
+
+    if (cart.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-10 text-slate-400 space-y-2">
+                <i data-lucide="shopping-cart" class="w-12 h-12 mx-auto opacity-30"></i>
+                <p class="font-bold">Tu carrito está vacío</p>
+                <p class="text-xs">¡Agrega platillos deliciosos para continuar!</p>
+            </div>`;
+        document.getElementById('cart-subtotal').innerText = "$0.00 MXN";
+        document.getElementById('cart-total').innerText = "$0.00 MXN";
+        lucide.createIcons();
+        return;
+    }
+
+    list.innerHTML = cart.map(item => {
+        subtotal += (item.discountPrice * item.quantity);
+        return `
+        <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-sm relative">
+            <img src="${item.image}" class="w-16 h-16 rounded-xl object-cover">
+            <div class="flex-1 min-w-0">
+                <h4 class="text-xs font-bold text-slate-800 truncate">${item.title}</h4>
+                <p class="text-[10px] text-slate-500">${item.restaurant}</p>
+                <div class="flex justify-between items-center mt-1.5">
+                    <span class="text-sm font-black text-brand-600">$${item.discountPrice}</span>
+                    <span class="text-xs font-bold bg-white px-2 py-0.5 rounded shadow-sm">Cant: ${item.quantity}</span>
+                </div>
+            </div>
+            <button onclick="removeFromCart('${item.id}')" class="absolute -top-2 -right-2 bg-red-100 hover:bg-red-500 hover:text-white text-red-500 p-1.5 rounded-full transition-colors">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>`;
+    }).join('');
+
+    document.getElementById('cart-subtotal').innerText = `$${subtotal.toFixed(2)} MXN`;
+    document.getElementById('cart-total').innerText = `$${subtotal.toFixed(2)} MXN`;
+    lucide.createIcons();
+}
+
+function checkout() {
+    if (cart.length === 0) {
+        showToast("⚠️ Tu carrito está vacío.");
+        return;
+    }
+    if (!currentUser) {
+        toggleCartDrawer();
+        showToast("Debes iniciar sesión para procesar tu pago.");
+        toggleAuthModal();
+        return;
+    }
+    showToast("💳 Redirigiendo a pasarela de pago segura...");
+    cart = [];
+    updateCartCounter();
+    toggleCartDrawer();
+}
+
+// FUNCIONES DE AUTH Y VERIFICACIÓN
+function toggleAuthModal() {
+    const modal = document.getElementById('auth-modal');
+    if (modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function switchAuthMode(mode) {
+    isRegisterMode = (mode === 'register');
+    const nameField = document.getElementById('name-field-container');
+    const title = document.getElementById('auth-modal-title');
+    const submitBtn = document.getElementById('auth-submit-btn');
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+
+    if (isRegisterMode) {
+        nameField.classList.remove('hidden');
+        title.innerText = 'Crear Cuenta';
+        submitBtn.innerText = 'Registrarse';
+        tabRegister.className = 'flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all';
+        tabLogin.className = 'flex-1 py-2 rounded-lg text-slate-500 transition-all';
+    } else {
+        nameField.classList.add('hidden');
+        title.innerText = 'Iniciar Sesión';
+        submitBtn.innerText = 'Acceder';
+        tabLogin.className = 'flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all';
+        tabRegister.className = 'flex-1 py-2 rounded-lg text-slate-500 transition-all';
+    }
+}
+
+async function submitAuthForm() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+    const name = document.getElementById('auth-name').value.trim();
+
+    if (!email || !password || (isRegisterMode && !name)) {
+        showToast('⚠️ Por favor completa todos los campos.');
+        return;
+    }
+
+    const endpoint = isRegisterMode ? '/api/register' : '/api/login';
+    const payload = isRegisterMode ? { nombre: name, correo: email, password } : { correo: email, password };
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentUser = data.user;
+            localStorage.setItem('sabor_user', JSON.stringify(currentUser));
+            updateAuthUI();
+            toggleAuthModal();
+            showToast(isRegisterMode ? '🎉 ¡Cuenta creada con éxito!' : `👋 ¡Bienvenido de nuevo, ${currentUser.name}!`);
+        } else if (data.requires_verification) {
+            pendingVerificationEmail = email;
+            toggleAuthModal();
+            document.getElementById('verify-email-display').innerText = email;
+            document.getElementById('verify-modal').classList.remove('hidden');
+            document.getElementById('verify-modal').classList.add('flex');
+            showToast('📧 Revisa tu correo electrónico.');
+        } else {
+            showToast(`❌ ${data.message || 'Ocurrió un error.'}`);
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('❌ Error de conexión con el servidor.');
+    }
+}
+
+async function submitVerification() {
+    const code = document.getElementById('verify-code-input').value.trim();
+    if (!code) return showToast("Ingresa el código");
+
+    try {
+        const res = await fetch('/api/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo: pendingVerificationEmail, codigo: code })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            closeVerifyModal();
+            showToast("✅ Cuenta verificada, ya puedes iniciar sesión.");
+            toggleAuthModal();
+            switchAuthMode('login');
+        } else {
+            showToast(`❌ ${data.message}`);
+        }
+    } catch (err) {
+        showToast("Error de red al verificar.");
+    }
+}
+
+function closeVerifyModal() {
+    document.getElementById('verify-modal').classList.add('hidden');
+    document.getElementById('verify-modal').classList.remove('flex');
+}
+
+function handleLogout() {
+    currentUser = null;
+    localStorage.removeItem('sabor_user');
+    updateAuthUI();
+    toggleAuthModal();
+    showToast('Sesión cerrada correctamente.');
+}
+
+function updateAuthUI() {
+    const btnText = document.getElementById('auth-btn-text');
+    const formContainer = document.getElementById('auth-form-container');
+    const userInfo = document.getElementById('auth-user-info');
+    const modalTitle = document.getElementById('auth-modal-title');
+
+    if (currentUser && currentUser.name) {
+        btnText.innerText = currentUser.name.split(' ')[0];
+        modalTitle.innerText = 'Mi Cuenta';
+        formContainer.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        document.getElementById('display-user-name').innerText = currentUser.name;
+        document.getElementById('display-user-email').innerText = currentUser.email;
+        const initials = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        document.getElementById('user-avatar-initials').innerText = initials;
+    } else {
+        btnText.innerText = 'Iniciar Sesión';
+        modalTitle.innerText = 'Iniciar Sesión';
+        formContainer.classList.remove('hidden');
+        userInfo.classList.add('hidden');
+    }
+}
+
+// FUNCIONES DE UI, RENDERIZADO Y FILTROS
 function renderCategories() {
     const container = document.getElementById('category-chips');
     container.innerHTML = categories.map(cat => {
@@ -231,7 +499,7 @@ function renderDealsGrid() {
                             </div>
                         </div>
                         <button onclick="openCouponModal('${deal.id}')" class="bg-slate-900 hover:bg-brand-500 text-white hover:text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
-                            <span>Obtener</span>
+                            <span>Ver más</span>
                             <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                         </button>
                     </div>
@@ -259,161 +527,6 @@ function startCountdowns() {
             }
         });
     }, 1000);
-}
-
-function toggleAuthModal() {
-    const modal = document.getElementById('auth-modal');
-    if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    } else {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-}
-
-function switchAuthMode(mode) {
-    isRegisterMode = (mode === 'register');
-    const nameField = document.getElementById('name-field-container');
-    const title = document.getElementById('auth-modal-title');
-    const submitBtn = document.getElementById('auth-submit-btn');
-    const tabLogin = document.getElementById('tab-login');
-    const tabRegister = document.getElementById('tab-register');
-
-    if (isRegisterMode) {
-        nameField.classList.remove('hidden');
-        title.innerText = 'Crear Cuenta';
-        submitBtn.innerText = 'Registrarse';
-        tabRegister.className = 'flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all';
-        tabLogin.className = 'flex-1 py-2 rounded-lg text-slate-500 transition-all';
-    } else {
-        nameField.classList.add('hidden');
-        title.innerText = 'Iniciar Sesión';
-        submitBtn.innerText = 'Acceder';
-        tabLogin.className = 'flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all';
-        tabRegister.className = 'flex-1 py-2 rounded-lg text-slate-500 transition-all';
-    }
-}
-
-async function submitAuthForm() {
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value.trim();
-    const name = document.getElementById('auth-name').value.trim();
-
-    if (!email || !password || (isRegisterMode && !name)) {
-        showToast('⚠️ Por favor completa todos los campos.');
-        return;
-    }
-
-    const endpoint = isRegisterMode ? '/api/register' : '/api/login';
-    const payload = isRegisterMode ? { nombre: name, correo: email, password } : { correo: email, password };
-
-    try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            currentUser = data.user;
-            localStorage.setItem('sabor_user', JSON.stringify(currentUser));
-            updateAuthUI();
-            toggleAuthModal();
-            showToast(isRegisterMode ? '🎉 ¡Cuenta creada con éxito!' : `👋 ¡Bienvenido de nuevo, ${currentUser.name}!`);
-        } else {
-            showToast(`❌ ${data.message || 'Ocurrió un error.'}`);
-        }
-    } catch (err) {
-        console.error(err);
-        showToast('❌ Error de conexión con el servidor.');
-    }
-}
-
-function handleLogout() {
-    currentUser = null;
-    localStorage.removeItem('sabor_user');
-    updateAuthUI();
-    toggleAuthModal();
-    showToast('Sesión cerrada correctamente.');
-}
-
-function updateAuthUI() {
-    const btnText = document.getElementById('auth-btn-text');
-    const formContainer = document.getElementById('auth-form-container');
-    const userInfo = document.getElementById('auth-user-info');
-    const modalTitle = document.getElementById('auth-modal-title');
-
-    if (currentUser && currentUser.name) {
-        btnText.innerText = currentUser.name.split(' ')[0];
-        modalTitle.innerText = 'Mi Cuenta';
-        formContainer.classList.add('hidden');
-        userInfo.classList.remove('hidden');
-        document.getElementById('display-user-name').innerText = currentUser.name;
-        document.getElementById('display-user-email').innerText = currentUser.email;
-        const initials = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        document.getElementById('user-avatar-initials').innerText = initials;
-    } else {
-        btnText.innerText = 'Iniciar Sesión';
-        modalTitle.innerText = 'Iniciar Sesión';
-        formContainer.classList.remove('hidden');
-        userInfo.classList.add('hidden');
-    }
-}
-
-function openCouponModal(dealId) {
-    const deal = dealsData.find(d => d.id === dealId);
-    if (!deal) return;
-
-    document.getElementById('modal-title').innerText = deal.title;
-    document.getElementById('modal-restaurant').innerHTML = `<i data-lucide="store" class="w-3.5 h-3.5"></i> ${deal.restaurant}`;
-    document.getElementById('modal-img').src = deal.image;
-    document.getElementById('modal-badge').innerText = deal.badge;
-    document.getElementById('modal-api-source').innerText = deal.apiSource;
-    document.getElementById('modal-price-discount').innerText = `$${deal.discountPrice} MXN`;
-    document.getElementById('modal-price-original').innerText = `$${deal.originalPrice}`;
-    document.getElementById('modal-coupon-code').innerText = deal.couponCode;
-    document.getElementById('modal-description').innerText = deal.description;
-    document.getElementById('modal-address').innerText = deal.address;
-    document.getElementById('modal-terms').innerText = `* ${deal.terms}`;
-    document.getElementById('modal-map-link').href = `https://maps.google.com/?q=${encodeURIComponent(deal.restaurant + ' ' + deal.address)}`;
-
-    const qrContainer = document.getElementById('modal-qr-container');
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(deal.couponCode)}`;
-    qrContainer.innerHTML = `<img src="${qrUrl}" alt="QR Code" class="w-32 h-32 object-contain">`;
-
-    document.getElementById('coupon-modal').classList.remove('hidden');
-    document.getElementById('coupon-modal').classList.add('flex');
-    lucide.createIcons();
-}
-
-function closeCouponModal() {
-    document.getElementById('coupon-modal').classList.add('hidden');
-    document.getElementById('coupon-modal').classList.remove('flex');
-}
-
-function copyCouponCode() {
-    const code = document.getElementById('modal-coupon-code').innerText;
-    const tempInput = document.createElement('input');
-    tempInput.value = code;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    document.execCommand('copy');
-    document.body.removeChild(tempInput);
-
-    const btnText = document.getElementById('copy-btn-text');
-    btnText.innerText = '¡Copiado!';
-    showToast('Código de cupón copiado al portapapeles 📋');
-    setTimeout(() => { btnText.innerText = 'Copiar'; }, 2000);
-}
-
-function markAsRedeemed() {
-    const scheduleSelect = document.getElementById('delivery-schedule-select');
-    const scheduleText = scheduleSelect ? scheduleSelect.options[scheduleSelect.selectedIndex].text : 'Entrega Inmediata';
-    closeCouponModal();
-    showToast(`🎉 ¡Pedido programado exitosamente! (${scheduleText})`);
 }
 
 function toggleFavorite(event, dealId) {

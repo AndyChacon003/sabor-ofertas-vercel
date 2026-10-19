@@ -1,14 +1,9 @@
 import { Pool } from 'pg';
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: true }
-});
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, message: 'Método no permitido' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ success: false });
 
     const { correo, password } = req.body;
 
@@ -19,9 +14,14 @@ export default async function handler(req, res) {
         }
 
         const usuario = result.rows[0];
+
+        // Validamos si ya verificó su correo
+        if (!usuario.verificado) {
+            return res.status(403).json({ success: false, message: 'Debes verificar tu correo antes de iniciar sesión.' });
+        }
+
         return res.status(200).json({ success: true, user: { id: usuario.id, name: usuario.nombre, email: usuario.correo } });
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ success: false, message: 'Error en el servidor al iniciar sesión.' });
+        return res.status(500).json({ success: false, message: 'Error al iniciar sesión.' });
     }
 }

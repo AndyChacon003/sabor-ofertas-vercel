@@ -9,11 +9,7 @@
     <script>
         tailwind.config = {
             theme: {
-                extend: {
-                    colors: {
-                        brand: { 100: '#ffedd5', 500: '#f97316', 600: '#ea580c' }
-                    }
-                }
+                extend: { colors: { brand: { 100: '#ffedd5', 500: '#f97316', 600: '#ea580c' } } }
             }
         }
     </script>
@@ -25,9 +21,7 @@
     <header class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-slate-100">
         <div class="max-w-5xl mx-auto p-4 space-y-3">
             <div class="flex justify-between items-center">
-                <h1 class="text-xl font-extrabold text-brand-600 tracking-tight flex items-center gap-1.5">
-                    <span>SaborOfertas</span>
-                </h1>
+                <h1 class="text-xl font-extrabold text-brand-600 tracking-tight">SaborOfertas</h1>
 
                 <div class="flex gap-2 sm:gap-3 items-center">
                     <button onclick="toggleAuthModal()" id="auth-btn"
@@ -40,15 +34,17 @@
                         <i data-lucide="map-pin" class="w-4 h-4 text-brand-500"></i>
                         <span id="current-location-text">Ubicación...</span>
                     </button>
-                    <button onclick="triggerApiSync()" title="Sincronizar ofertas"
-                        class="p-1.5 hover:bg-slate-100 rounded-full transition-colors">
-                        <i id="sync-icon" data-lucide="refresh-cw" class="w-4 h-4 text-slate-600"></i>
-                    </button>
                     <button onclick="toggleFavoritesDrawer()"
                         class="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors">
                         <i data-lucide="heart" class="w-5 h-5 text-slate-600"></i>
                         <span id="fav-counter"
                             class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full font-bold shadow-sm">0</span>
+                    </button>
+                    <button onclick="toggleCartDrawer()"
+                        class="relative p-1.5 hover:bg-brand-50 rounded-full transition-colors">
+                        <i data-lucide="shopping-bag" class="w-5 h-5 text-brand-600"></i>
+                        <span id="cart-counter"
+                            class="absolute -top-1 -right-1 bg-brand-500 text-white text-[10px] px-1.5 rounded-full font-bold shadow-sm">0</span>
                     </button>
                 </div>
             </div>
@@ -78,29 +74,28 @@
                 class="filter-pill active px-3.5 py-1.5 rounded-full font-semibold text-xs bg-slate-900 text-white shadow-sm"
                 data-type="all" onclick="setFilterType('all')">Todas</button>
             <button
-                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200"
                 data-type="2x1" onclick="setFilterType('2x1')">2x1</button>
             <button
-                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200"
                 data-type="30plus" onclick="setFilterType('30plus')">+30% Dto</button>
             <button
-                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200"
                 data-type="shipping" onclick="setFilterType('shipping')">Envío Gratis</button>
             <button
-                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-white text-slate-700 border border-slate-200"
                 data-type="flash" onclick="setFilterType('flash')">Flash</button>
             <button
-                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1 hover:bg-amber-100"
-                data-type="api" onclick="setFilterType('api')"><i data-lucide="sparkles"
-                    class="w-3.5 h-3.5 text-amber-500"></i> Menú Local</button>
+                class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1"
+                data-type="api" onclick="setFilterType('api')"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Menú
+                Local</button>
         </section>
 
         <section>
             <h2 class="text-sm font-bold mb-3 flex items-center gap-2 text-slate-800"><i data-lucide="zap"
                     class="w-4 h-4 text-yellow-500 fill-yellow-500"></i> Ofertas Flash Exclusivas</h2>
             <div id="flash-deals-container"
-                class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-900 p-4 rounded-2xl shadow-lg">
-            </div>
+                class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-900 p-4 rounded-2xl shadow-lg"></div>
         </section>
 
         <section>
@@ -108,19 +103,17 @@
                 <h2 class="text-lg font-bold text-slate-800">Ofertas y Platillos (<span id="deals-count-badge">0</span>)
                 </h2>
                 <select onchange="handleSortChange(this.value)"
-                    class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                    class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
                     <option value="recommended">Recomendados</option>
                     <option value="discount">Mayor descuento</option>
                     <option value="distance">Más cercanos</option>
                     <option value="rating">Mejor calificados</option>
                 </select>
             </div>
-
             <div id="deals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-
             <div id="empty-state" class="hidden flex-col items-center justify-center py-16 text-slate-400">
                 <i data-lucide="search-x" class="w-16 h-16 mb-4 opacity-50"></i>
-                <p class="font-medium text-lg text-slate-500">No encontramos ofertas para tu búsqueda.</p>
+                <p class="font-medium text-lg">No encontramos ofertas para tu búsqueda.</p>
                 <button onclick="resetFilters()" class="text-brand-500 mt-3 font-bold hover:underline">Limpiar
                     filtros</button>
             </div>
@@ -132,167 +125,159 @@
         class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
             <div class="flex justify-between items-center">
-                <h3 class="font-extrabold text-xl text-slate-900" id="auth-modal-title">Iniciar Sesión</h3>
-                <button onclick="toggleAuthModal()" class="p-1.5 bg-slate-100 rounded-full hover:bg-slate-200"><i
-                        data-lucide="x" class="w-5 h-5"></i></button>
+                <h3 class="font-extrabold text-xl" id="auth-modal-title">Iniciar Sesión</h3>
+                <button onclick="toggleAuthModal()" class="p-1.5 bg-slate-100 rounded-full"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
             </div>
-
             <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
                 <button onclick="switchAuthMode('login')" id="tab-login"
-                    class="flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all">Iniciar
-                    Sesión</button>
+                    class="flex-1 py-2 rounded-lg bg-white shadow-sm transition-all">Iniciar Sesión</button>
                 <button onclick="switchAuthMode('register')" id="tab-register"
                     class="flex-1 py-2 rounded-lg text-slate-500 transition-all">Registrarse</button>
             </div>
-
             <div id="auth-form-container" class="space-y-3">
                 <div id="name-field-container" class="hidden">
                     <label class="block text-xs font-bold text-slate-600 mb-1">Nombre Completo</label>
-                    <input type="text" id="auth-name" placeholder="Ej. Andrés Cruz"
-                        class="w-full px-3 py-2.5 bg-slate-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                    <input type="text" id="auth-name"
+                        class="w-full px-3 py-2.5 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Correo Electrónico</label>
-                    <input type="email" id="auth-email" placeholder="correo@domain.com"
-                        class="w-full px-3 py-2.5 bg-slate-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                    <input type="email" id="auth-email"
+                        class="w-full px-3 py-2.5 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Contraseña</label>
-                    <input type="password" id="auth-password" placeholder="••••••••"
-                        class="w-full px-3 py-2.5 bg-slate-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                    <input type="password" id="auth-password"
+                        class="w-full px-3 py-2.5 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
                 <button onclick="submitAuthForm()" id="auth-submit-btn"
-                    class="w-full bg-brand-500 hover:bg-brand-600 text-white font-black py-3 rounded-xl transition-all shadow-lg shadow-brand-500/20 mt-2">Acceder</button>
+                    class="w-full bg-brand-500 hover:bg-brand-600 text-white font-black py-3 rounded-xl mt-2">Acceder</button>
             </div>
             <div id="auth-user-info" class="hidden space-y-4 text-center">
                 <div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black"
-                    id="user-avatar-initials">AC</div>
+                    id="user-avatar-initials"></div>
                 <div>
-                    <h4 class="font-extrabold text-base text-slate-900" id="display-user-name"></h4>
+                    <h4 class="font-extrabold text-base" id="display-user-name"></h4>
                     <p class="text-xs text-slate-500" id="display-user-email"></p>
                 </div>
                 <button onclick="handleLogout()"
-                    class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 rounded-xl transition-colors text-xs">Cerrar
-                    Sesión</button>
+                    class="w-full bg-red-50 text-red-600 font-bold py-2.5 rounded-xl text-xs">Cerrar Sesión</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de GPS y Ubicación -->
+    <!-- Modal de Verificación de Correo -->
+    <div id="verify-modal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
+            <h3 class="font-extrabold text-xl">Verifica tu Correo</h3>
+            <p class="text-xs text-slate-500">Hemos enviado un código de 6 dígitos a <span id="verify-email-display"
+                    class="font-bold text-slate-800"></span></p>
+            <input type="text" id="verify-code-input" placeholder="123456"
+                class="w-full text-center tracking-widest text-2xl font-black py-3 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+            <button onclick="submitVerification()"
+                class="w-full bg-slate-900 hover:bg-black text-white font-black py-3 rounded-xl">Verificar
+                Cuenta</button>
+            <button onclick="closeVerifyModal()"
+                class="text-xs text-slate-400 hover:text-slate-600 font-bold">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal de GPS -->
     <div id="location-modal"
         class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl">
-            <h3 class="font-extrabold text-lg mb-4 text-center">Selecciona tu ubicación</h3>
-            <div class="space-y-3">
-                <button onclick="requestGeolocation()"
-                    class="w-full text-center px-4 py-3 bg-brand-50 hover:bg-brand-100 text-brand-600 font-black rounded-xl transition-colors border border-brand-200 flex items-center justify-center gap-2 shadow-sm">
-                    <i data-lucide="navigation" class="w-5 h-5 fill-brand-600 text-brand-600"></i> Usar mi ubicación
-                    actual
-                </button>
-
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-slate-100"></div>
-                    <span class="flex-shrink-0 mx-3 text-slate-400 text-[10px] font-bold uppercase tracking-wider">O
-                        elige manualmente</span>
-                    <div class="flex-grow border-t border-slate-100"></div>
-                </div>
-
-                <button onclick="selectCity('Morelia, Mich.')"
-                    class="w-full text-center px-4 py-3 bg-slate-50 hover:bg-slate-100 font-semibold rounded-xl transition-colors border border-slate-100 text-slate-700">Morelia,
-                    Mich.</button>
-                <button onclick="selectCity('Acámbaro, Gto.')"
-                    class="w-full text-center px-4 py-3 bg-slate-50 hover:bg-slate-100 font-semibold rounded-xl transition-colors border border-slate-100 text-slate-700">Acámbaro,
-                    Gto.</button>
-            </div>
+        <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-3">
+            <h3 class="font-extrabold text-lg text-center">Selecciona tu ubicación</h3>
+            <button onclick="requestGeolocation()"
+                class="w-full text-center px-4 py-3 bg-brand-50 text-brand-600 font-black rounded-xl border border-brand-200 flex justify-center gap-2">
+                <i data-lucide="navigation" class="w-5 h-5"></i> Usar mi ubicación actual
+            </button>
+            <button onclick="selectCity('Morelia, Mich.')"
+                class="w-full text-center px-4 py-3 bg-slate-50 font-semibold rounded-xl border border-slate-100">Morelia,
+                Mich.</button>
             <button onclick="toggleLocationModal()"
-                class="w-full mt-4 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800">Cancelar</button>
+                class="w-full mt-2 bg-slate-900 text-white font-bold py-3 rounded-xl">Cancelar</button>
         </div>
     </div>
 
-    <div id="favorites-modal"
-        class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-end sm:items-center justify-center">
-        <div
-            class="bg-white w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl p-6 h-[75vh] sm:h-[600px] flex flex-col shadow-2xl transition-transform">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-extrabold text-xl">Tus Favoritos</h3>
-                <button onclick="toggleFavoritesDrawer()" class="p-2 bg-slate-100 rounded-full hover:bg-slate-200"><i
-                        data-lucide="x" class="w-5 h-5"></i></button>
+    <!-- Cajón del Carrito -->
+    <div id="cart-drawer" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 justify-end">
+        <div class="bg-white w-full sm:w-[400px] h-full flex flex-col shadow-2xl">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-extrabold text-xl flex items-center gap-2"><i data-lucide="shopping-bag"
+                        class="text-brand-500"></i> Mi Pedido</h3>
+                <button onclick="toggleCartDrawer()" class="p-2 bg-white rounded-full shadow-sm hover:bg-slate-100"><i
+                        data-lucide="x"></i></button>
             </div>
-            <div id="favorites-list" class="flex-1 overflow-y-auto space-y-3 scrollbar-hide pb-4"></div>
+            <div id="cart-items-list" class="flex-1 overflow-y-auto p-5 space-y-4"></div>
+            <div class="p-5 bg-slate-50 border-t border-slate-100 space-y-3">
+                <div class="flex justify-between text-sm font-bold text-slate-600"><span>Subtotal</span><span
+                        id="cart-subtotal">$0.00 MXN</span></div>
+                <div class="flex justify-between text-lg font-black pt-2 border-t border-slate-200">
+                    <span>Total</span><span id="cart-total">$0.00 MXN</span></div>
+                <button onclick="checkout()"
+                    class="w-full bg-slate-900 text-white font-black py-3.5 rounded-xl mt-2">Proceder al Pago</button>
+            </div>
         </div>
     </div>
 
+    <!-- Modal del Platillo con Mapa y QR -->
     <div id="coupon-modal"
         class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center p-4">
-        <div
-            class="bg-white w-full max-w-sm rounded-[2rem] p-5 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-5 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
             <div class="flex justify-between items-center mb-3">
-                <span id="modal-badge"
-                    class="bg-brand-500 text-white text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-wide"></span>
-                <button onclick="closeCouponModal()" class="p-1.5 bg-slate-100 rounded-full hover:bg-slate-200"><i
-                        data-lucide="x" class="w-5 h-5"></i></button>
+                <span id="modal-badge" class="bg-brand-500 text-white text-xs font-black px-2.5 py-1 rounded-lg"></span>
+                <button onclick="closeCouponModal()" class="p-1.5 bg-slate-100 rounded-full"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
             </div>
-            <img id="modal-img" src="" class="w-full h-44 object-cover rounded-2xl mb-4 shadow-inner">
-            <h2 id="modal-title" class="font-black text-xl leading-tight text-slate-900"></h2>
-            <div class="flex justify-between items-start mt-2">
-                <div>
-                    <p id="modal-restaurant" class="text-brand-600 font-bold text-sm flex items-center gap-1.5"></p>
-                    <p id="modal-api-source" class="text-[10px] font-medium text-slate-400 mt-0.5"></p>
-                </div>
-            </div>
-
-            <div class="flex gap-2 items-baseline mt-4 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                <span class="text-sm font-bold text-slate-500">Pagas:</span>
+            <img id="modal-img" src="" class="w-full h-40 object-cover rounded-2xl mb-4">
+            <h2 id="modal-title" class="font-black text-xl leading-tight"></h2>
+            <p id="modal-restaurant" class="text-brand-600 font-bold text-sm flex items-center gap-1.5 mt-2"></p>
+            <div class="flex gap-2 items-baseline mt-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <span class="text-sm font-bold text-slate-500">Precio:</span>
                 <span id="modal-price-discount" class="text-3xl font-black text-brand-500"></span>
                 <span id="modal-price-original" class="line-through text-slate-400 font-medium text-sm ml-1"></span>
             </div>
+            <p id="modal-description" class="text-xs text-slate-600 mt-3"></p>
 
-            <div class="mt-4 bg-amber-50 border border-amber-200 p-3 rounded-2xl space-y-2">
-                <label class="text-xs font-extrabold text-amber-800 flex items-center gap-1.5">
-                    <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i> Programar Entrega del Pedido
-                </label>
-                <select id="delivery-schedule-select"
-                    class="w-full bg-white border border-amber-300 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500">
-                    <option value="now">⚡ Entrega Inmediata (aprox. 30-45 min)</option>
-                    <option value="today-evening">🌙 Hoy por la noche (19:00 - 21:00 hrs)</option>
-                    <option value="tomorrow-morning">🌅 Mañana temprano (09:00 - 11:00 hrs)</option>
-                    <option value="tomorrow-evening">🌆 Mañana por la tarde (14:00 - 17:00 hrs)</option>
-                </select>
+            <div class="mt-4 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                <div class="bg-slate-800 text-white text-[10px] font-bold px-3 py-1.5"><i data-lucide="map-pin"
+                        class="w-3 h-3 inline"></i> Ubicación del Local</div>
+                <iframe id="modal-map-iframe" width="100%" height="120" style="border:0;" loading="lazy"
+                    src=""></iframe>
             </div>
 
-            <p id="modal-description" class="text-xs text-slate-600 mt-3 leading-relaxed"></p>
-            <p id="modal-terms" class="text-[10px] text-slate-400 mt-1 font-medium"></p>
-
-            <div class="bg-slate-900 p-3.5 rounded-2xl flex items-center justify-between mt-4 shadow-lg">
-                <span id="modal-coupon-code" class="font-mono font-bold tracking-widest text-lg text-white"></span>
-                <button onclick="copyCouponCode()"
-                    class="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl flex gap-1.5 items-center transition-colors">
-                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> <span id="copy-btn-text">Copiar</span>
-                </button>
+            <div class="mt-4 text-center">
+                <p class="text-[10px] font-bold text-slate-400 mb-1">Código QR de Validación</p>
+                <div id="modal-qr-container"
+                    class="flex justify-center p-2 bg-white rounded-xl mx-auto w-fit border border-slate-100"></div>
             </div>
 
-            <div id="modal-qr-container"
-                class="flex justify-center mt-4 p-2 bg-white rounded-2xl mx-auto w-fit shadow-sm border border-slate-100">
-            </div>
-
-            <a id="modal-map-link" href="#" target="_blank"
-                class="flex justify-center items-center gap-1.5 text-xs text-brand-600 hover:text-brand-700 font-bold mt-4 mb-2 bg-brand-50 py-2 rounded-xl">
-                <i data-lucide="map" class="w-3.5 h-3.5"></i> <span id="modal-address"></span> <i
-                    data-lucide="external-link" class="w-3 h-3"></i>
-            </a>
-
-            <button onclick="markAsRedeemed()"
-                class="w-full bg-brand-500 hover:bg-brand-600 text-white font-black py-3 rounded-xl mt-1 transition-transform active:scale-95 shadow-lg shadow-brand-500/30">¡Confirmar
-                y Programar Pedido!</button>
+            <button onclick="addToCartFromModal()"
+                class="w-full bg-brand-500 text-white font-black py-3 rounded-xl mt-4 flex items-center justify-center gap-2">
+                <i data-lucide="shopping-cart" class="w-5 h-5"></i> Agregar al Carrito
+            </button>
         </div>
     </div>
 
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <!-- Modal Favoritos -->
+    <div id="favorites-modal"
+        class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 h-[600px] flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-extrabold text-xl">Tus Favoritos</h3>
+                <button onclick="toggleFavoritesDrawer()" class="p-2 bg-slate-100 rounded-full"><i
+                        data-lucide="x"></i></button>
+            </div>
+            <div id="favorites-list" class="flex-1 overflow-y-auto space-y-3 pb-4"></div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none"></div>
 
     <script src="js/app.js"></script>
-    <script>
-        lucide.createIcons();
-    </script>
+    <script>lucide.createIcons();</script>
 </body>
 
 </html>
