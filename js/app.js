@@ -1,4 +1,4 @@
-let currentCity = "Morelia, Mich.";
+let currentCity = "Ubicación...";
 let selectedCategory = "all";
 let selectedFilterType = "all";
 let currentSort = "recommended";
@@ -9,15 +9,13 @@ let isRegisterMode = false;
 
 let categories = [];
 let dealsData = [];
-let apiGlobalMeals = [];
+let apiLocalMeals = [];
 
 window.onload = async function () {
-    // Cargar sesión guardada si existe y validarla de forma segura
     const savedUser = localStorage.getItem('sabor_user');
     if (savedUser) {
         try {
             const parsed = JSON.parse(savedUser);
-            // Soportar tanto 'name' como 'nombre' por compatibilidad de datos viejos
             const userName = parsed.name || parsed.nombre;
             const userEmail = parsed.email || parsed.correo;
 
@@ -35,7 +33,7 @@ window.onload = async function () {
     try {
         const [catsResponse, dealsResponse] = await Promise.all([
             fetch('/api/categories'),
-            fetch('/api/platillos') // Cargado desde tu base de datos en Neon
+            fetch('/api/platillos')
         ]);
 
         categories = await catsResponse.json();
@@ -43,15 +41,15 @@ window.onload = async function () {
 
         renderCategories();
 
-        // Cargar platillos externos (Menú Gourmet / Internacional)
-        await fetchExternalFoodAPI();
+        // Inyectar datos locales simulando API de red de Morelia
+        await fetchLocalMoreliaAPI();
 
         renderFlashDeals();
         renderDealsGrid();
         startCountdowns();
         lucide.createIcons();
     } catch (error) {
-        console.error("Error cargando los datos desde la API:", error);
+        console.error("Error cargando los datos:", error);
         showToast("Error conectando con el servidor API.");
     }
 
@@ -62,38 +60,56 @@ window.onload = async function () {
     });
 };
 
-// Integración de API externa de comida (TheMealDB adaptada a Menú Gourmet)
-async function fetchExternalFoodAPI() {
-    try {
-        const res = await fetch('https://www.themealdb.com/api/json/v1/1/search.php?s=');
-        const data = await res.json();
-        if (data && data.meals) {
-            apiGlobalMeals = data.meals.map((meal, index) => ({
-                id: 'meal-api-' + meal.idMeal,
-                title: meal.strMeal,
-                restaurant: `${meal.strArea} Kitchen (${meal.strCategory})`,
-                category: 'saludable',
-                image: meal.strMealThumb,
-                badge: 'GOURMET',
-                discountType: index % 2 === 0 ? 'shipping' : '30plus',
-                originalPrice: 220 + (index * 5),
-                discountPrice: 150 + (index * 3),
-                rating: 4.8,
-                reviews: 45 + index,
-                distance: parseFloat((1.2 + (index * 0.3)).toFixed(1)),
-                expiresIn: 3600 * 6,
-                isFlash: index < 2,
-                couponCode: 'GOURMET' + meal.idMeal.slice(-4),
-                apiSource: 'Selección Internacional SaborOfertas',
-                address: 'Sucursal Digital Autorizada',
-                description: meal.strInstructions ? meal.strInstructions.substring(0, 140) + '...' : 'Platillo internacional preparado al momento por chefs expertos.',
-                terms: 'Válido para entrega a domicilio o recoger en sucursal participante.',
-                isExternalAPI: true
-            }));
-            dealsData = [...dealsData, ...apiGlobalMeals];
-        }
-    } catch (err) {
-        console.error("No se pudo cargar la API externa de comida:", err);
+// Simulador de API para traer negocios de Morelia
+async function fetchLocalMoreliaAPI() {
+    const moreliaLocalData = [
+        { id: 'mrl-1', title: 'Tacos Pastor y Suadero (Orden)', restaurant: 'Taquería El Infierno', category: 'tacos', image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80', badge: 'MÁS PEDIDO', discountType: '2x1', originalPrice: 180, discountPrice: 90, rating: 4.8, reviews: 3100, distance: 1.1, expiresIn: 3600 * 5, isFlash: true, couponCode: 'INF2X1', apiSource: 'Morelia Local Network', address: 'Av. Madero Poniente', description: 'Nuestros clásicos tacos al pastor con doble tortilla, piña, cilantro y cebolla.', terms: 'Aplica en todas las sucursales.', isExternalAPI: true },
+        { id: 'mrl-2', title: 'Uchepos con Crema y Queso', restaurant: 'Restaurante San Miguelito', category: 'saludable', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80', badge: 'TRADICIONAL', discountType: 'shipping', originalPrice: 160, discountPrice: 130, rating: 4.9, reviews: 890, distance: 2.8, expiresIn: 3600 * 10, isFlash: false, couponCode: 'MIGUEL130', apiSource: 'Morelia Local Network', address: 'Av. Camelinas', description: 'Auténticos uchepos michoacanos bañados en salsa verde, crema de rancho y queso.', terms: 'Sujeto a disponibilidad.', isExternalAPI: true },
+        { id: 'mrl-3', title: 'Hamburguesa Doble Smash', restaurant: 'Smash Burger Lab', category: 'hamburguesas', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', badge: 'EXCLUSIVO', discountType: '30plus', originalPrice: 210, discountPrice: 147, rating: 4.9, reviews: 512, distance: 1.4, expiresIn: 3600 * 2, isFlash: true, couponCode: 'SMASH30', apiSource: 'Morelia Local Network', address: 'Boulevard Chiquimitio', description: 'Doble carne de res smash, queso cheddar, tocino y aderezo especial.', terms: 'No incluye papas.', isExternalAPI: true },
+        { id: 'mrl-4', title: 'Sushi Empanizado Mar y Tierra', restaurant: 'Sushi Itto Camelinas', category: 'sushi', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80', badge: 'GOURMET', discountType: '2x1', originalPrice: 220, discountPrice: 110, rating: 4.6, reviews: 340, distance: 3.5, expiresIn: 3600 * 6, isFlash: false, couponCode: 'SUSHI2X1', apiSource: 'Morelia Local Network', address: 'Plaza Camelinas', description: 'Rollo empanizado relleno de camarón, res y queso crema.', terms: 'Válido solo en comedor o pick-up.', isExternalAPI: true }
+    ];
+
+    dealsData = [...dealsData, ...moreliaLocalData];
+}
+
+// Función GPS Real
+function requestGeolocation() {
+    showToast('📍 Obteniendo ubicación GPS...');
+
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                toggleLocationModal();
+                document.getElementById('current-location-text').innerText = "Tu ubicación";
+                document.getElementById('mobile-location-text').innerText = "Tu ubicación";
+                currentCity = "Tu ubicación";
+
+                showToast('✅ Ubicación detectada. Ordenando por cercanía.');
+
+                // Recalculando distancias dinámicamente para simular el GPS
+                dealsData = dealsData.map(deal => {
+                    deal.distance = parseFloat((Math.random() * 2.1 + 0.1).toFixed(1));
+                    return deal;
+                });
+
+                const sortSelect = document.querySelector('select[onchange="handleSortChange(this.value)"]');
+                if (sortSelect) sortSelect.value = 'distance';
+
+                handleSortChange('distance');
+
+                setTimeout(() => triggerApiSync(), 800);
+            },
+            (error) => {
+                console.error("Error GPS:", error);
+                showToast('❌ Permiso de ubicación denegado.');
+            },
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    } else {
+        showToast('❌ Navegador no soporta GPS.');
     }
 }
 
@@ -245,7 +261,6 @@ function startCountdowns() {
     }, 1000);
 }
 
-// Funciones de Autenticación
 function toggleAuthModal() {
     const modal = document.getElementById('auth-modal');
     if (modal.classList.contains('hidden')) {
@@ -513,25 +528,25 @@ function selectCity(city) {
 function triggerApiSync() {
     const icon = document.getElementById('sync-icon');
     icon.classList.add('animate-spin');
-    showToast('🔄 Conectando con Red de Restaurantes...');
+    showToast('🔄 Conectando con Red Local de Morelia...');
 
     setTimeout(() => {
         icon.classList.remove('animate-spin');
-        const apiSources = ['Rappi Partner Network', 'UberEats Direct', 'Google Places + POS', 'SaborOfertas Cloud'];
+        const apiSources = ['Canirac Michoacán', 'Directorio Centro', 'SaborOfertas Local'];
         const randomSource = apiSources[Math.floor(Math.random() * apiSources.length)];
 
         const newDeal = {
             id: 'deal-api-' + Date.now(),
-            title: '¡Nueva Oferta! 30% en Chilaquiles',
-            restaurant: 'El Rinconcito Michoacano',
+            title: '¡Nueva Oferta! Uchepos Especiales',
+            restaurant: 'Cenaduría Centro',
             category: 'tacos',
             image: 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80',
-            badge: 'EXCLUSIVO', discountType: '30plus', originalPrice: 140, discountPrice: 98,
+            badge: 'EN VIVO', discountType: '30plus', originalPrice: 140, discountPrice: 98,
             rating: 5.0, reviews: 12, distance: 0.4, expiresIn: 3600 * 3, isFlash: true,
             couponCode: 'SYNSABOR' + Math.floor(Math.random() * 900 + 100),
-            apiSource: randomSource, address: 'Calle Aquiles Serdán #45',
-            description: 'Chilaquiles verdes o rojos con pollo desmenuzado, crema, queso cotija y frijoles refritos.',
-            terms: 'Oferta capturada en tiempo real.'
+            apiSource: randomSource, address: 'Centro Histórico',
+            description: 'Uchepos calientitos capturados en tiempo real.',
+            terms: 'Oferta capturada ahora.'
         };
 
         dealsData.unshift(newDeal);

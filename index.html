@@ -22,7 +22,6 @@
 
 <body class="bg-slate-50 text-slate-900 font-sans pb-20">
 
-    <!-- Header centrado y alineado con el contenido principal -->
     <header class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-slate-100">
         <div class="max-w-5xl mx-auto p-4 space-y-3">
             <div class="flex justify-between items-center">
@@ -31,7 +30,6 @@
                 </h1>
 
                 <div class="flex gap-2 sm:gap-3 items-center">
-                    <!-- Botón de Inicio de Sesión / Perfil -->
                     <button onclick="toggleAuthModal()" id="auth-btn"
                         class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full text-xs font-bold transition-colors">
                         <i data-lucide="user" class="w-4 h-4"></i>
@@ -40,7 +38,7 @@
                     <button onclick="toggleLocationModal()"
                         class="flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">
                         <i data-lucide="map-pin" class="w-4 h-4 text-brand-500"></i>
-                        <span id="current-location-text">Morelia, Mich.</span>
+                        <span id="current-location-text">Ubicación...</span>
                     </button>
                     <button onclick="triggerApiSync()" title="Sincronizar ofertas"
                         class="p-1.5 hover:bg-slate-100 rounded-full transition-colors">
@@ -55,10 +53,9 @@
                 </div>
             </div>
 
-            <!-- Barra de Búsqueda Centrada y con Ancho Limitado -->
             <div class="flex justify-center">
                 <div class="relative w-full max-w-xl">
-                    <input type="text" id="search-input" placeholder="Buscar tacos, pizza, sushi, hamburguesas..."
+                    <input type="text" id="search-input" placeholder="Buscar tacos, gaspachos, hamburguesas..."
                         class="w-full pl-10 pr-10 py-2.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white rounded-2xl outline-none focus:ring-2 focus:ring-brand-500 border border-transparent focus:border-brand-500/20 text-sm transition-all shadow-inner">
                     <i data-lucide="search" class="absolute left-3.5 top-3 w-4 h-4 text-slate-400"></i>
                     <button id="clear-search-btn" onclick="clearSearch()"
@@ -67,7 +64,7 @@
                 </div>
             </div>
         </div>
-        <span id="mobile-location-text" class="hidden">Morelia, Mich.</span>
+        <span id="mobile-location-text" class="hidden">Ubicación...</span>
     </header>
 
     <main class="p-4 max-w-5xl mx-auto space-y-8">
@@ -95,7 +92,7 @@
             <button
                 class="filter-pill px-3.5 py-1.5 rounded-full font-medium text-xs bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1 hover:bg-amber-100"
                 data-type="api" onclick="setFilterType('api')"><i data-lucide="sparkles"
-                    class="w-3.5 h-3.5 text-amber-500"></i> Menú Gourmet</button>
+                    class="w-3.5 h-3.5 text-amber-500"></i> Menú Local</button>
         </section>
 
         <section>
@@ -108,8 +105,8 @@
 
         <section>
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-slate-800">Ofertas y Platillos Disponibles (<span
-                        id="deals-count-badge">0</span>)</h2>
+                <h2 class="text-lg font-bold text-slate-800">Ofertas y Platillos (<span id="deals-count-badge">0</span>)
+                </h2>
                 <select onchange="handleSortChange(this.value)"
                     class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
                     <option value="recommended">Recomendados</option>
@@ -181,6 +178,37 @@
         </div>
     </div>
 
+    <!-- Modal de GPS y Ubicación -->
+    <div id="location-modal"
+        class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl">
+            <h3 class="font-extrabold text-lg mb-4 text-center">Selecciona tu ubicación</h3>
+            <div class="space-y-3">
+                <button onclick="requestGeolocation()"
+                    class="w-full text-center px-4 py-3 bg-brand-50 hover:bg-brand-100 text-brand-600 font-black rounded-xl transition-colors border border-brand-200 flex items-center justify-center gap-2 shadow-sm">
+                    <i data-lucide="navigation" class="w-5 h-5 fill-brand-600 text-brand-600"></i> Usar mi ubicación
+                    actual
+                </button>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-slate-100"></div>
+                    <span class="flex-shrink-0 mx-3 text-slate-400 text-[10px] font-bold uppercase tracking-wider">O
+                        elige manualmente</span>
+                    <div class="flex-grow border-t border-slate-100"></div>
+                </div>
+
+                <button onclick="selectCity('Morelia, Mich.')"
+                    class="w-full text-center px-4 py-3 bg-slate-50 hover:bg-slate-100 font-semibold rounded-xl transition-colors border border-slate-100 text-slate-700">Morelia,
+                    Mich.</button>
+                <button onclick="selectCity('Acámbaro, Gto.')"
+                    class="w-full text-center px-4 py-3 bg-slate-50 hover:bg-slate-100 font-semibold rounded-xl transition-colors border border-slate-100 text-slate-700">Acámbaro,
+                    Gto.</button>
+            </div>
+            <button onclick="toggleLocationModal()"
+                class="w-full mt-4 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800">Cancelar</button>
+        </div>
+    </div>
+
     <div id="favorites-modal"
         class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-end sm:items-center justify-center">
         <div
@@ -191,23 +219,6 @@
                         data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div id="favorites-list" class="flex-1 overflow-y-auto space-y-3 scrollbar-hide pb-4"></div>
-        </div>
-    </div>
-
-    <div id="location-modal"
-        class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl">
-            <h3 class="font-extrabold text-lg mb-4 text-center">Selecciona tu ciudad</h3>
-            <div class="space-y-2">
-                <button onclick="selectCity('Morelia, Mich.')"
-                    class="w-full text-center px-4 py-3 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 font-semibold rounded-xl transition-colors border border-slate-100">Morelia,
-                    Mich.</button>
-                <button onclick="selectCity('CDMX')"
-                    class="w-full text-center px-4 py-3 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 font-semibold rounded-xl transition-colors border border-slate-100">Ciudad
-                    de México</button>
-            </div>
-            <button onclick="toggleLocationModal()"
-                class="w-full mt-4 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800">Cerrar</button>
         </div>
     </div>
 
@@ -236,7 +247,6 @@
                 <span id="modal-price-original" class="line-through text-slate-400 font-medium text-sm ml-1"></span>
             </div>
 
-            <!-- Selector de Programación de Entrega -->
             <div class="mt-4 bg-amber-50 border border-amber-200 p-3 rounded-2xl space-y-2">
                 <label class="text-xs font-extrabold text-amber-800 flex items-center gap-1.5">
                     <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i> Programar Entrega del Pedido
