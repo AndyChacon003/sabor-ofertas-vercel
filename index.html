@@ -14,6 +14,12 @@
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Agregamos comportamiento de scroll suave a toda la página */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
 </head>
 
 <body class="bg-slate-50 text-slate-900 font-sans pb-0">
@@ -76,7 +82,7 @@
                 <h2 class="text-2xl sm:text-4xl font-black mb-2 leading-tight">¡Envío Gratis en Morelia!</h2>
                 <p class="text-xs sm:text-sm font-medium text-slate-200 max-w-sm mb-4">Pide tus enchiladas, gaspachos o
                     carnitas favoritas y te las llevamos sin costo de envío hoy mismo.</p>
-                <button
+                <button onclick="scrollToOfertas()"
                     class="bg-white text-slate-900 px-5 py-2.5 rounded-xl font-black text-sm w-fit hover:bg-slate-100 transition-colors shadow-lg flex items-center gap-2 active:scale-95">
                     Descubrir Ofertas <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
@@ -117,7 +123,8 @@
                 class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-900 p-4 rounded-2xl shadow-lg"></div>
         </section>
 
-        <section>
+        <!-- Agregamos el ID 'ofertas-section' para que el botón del banner sepa a dónde bajar -->
+        <section id="ofertas-section">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-slate-800">Ofertas y Platillos (<span id="deals-count-badge">0</span>)
                 </h2>
@@ -139,39 +146,48 @@
         </section>
     </main>
 
-    <!-- Footer Profesional Corporativo -->
+    <!-- Footer Profesional Corporativo Funcional -->
     <footer class="bg-slate-900 text-slate-300 py-12 border-t border-slate-800 rounded-t-[3rem] mt-10">
         <div class="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="space-y-4">
                 <h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">SaborOfertas</h2>
                 <p class="text-xs text-slate-400 leading-relaxed">La mejor plataforma de delivery y ofertas
-                    gastronómicas. Comida caliente, rápida y segura directo a tu puerta.</p>
+                    gastronómicas. Comida caliente, rápida y segura directo a tu puerta en Morelia.</p>
             </div>
             <div>
                 <h4 class="text-white font-bold mb-4 text-sm">Conócenos</h4>
                 <ul class="space-y-2 text-xs">
-                    <li><a href="#" class="hover:text-brand-500 transition-colors">Acerca de nosotros</a></li>
-                    <li><a href="#" class="hover:text-brand-500 transition-colors">Registra tu restaurante</a></li>
-                    <li><a href="#" class="hover:text-brand-500 transition-colors">Conviértete en repartidor</a></li>
+                    <li><a href="javascript:void(0)" onclick="showComingSoon('Acerca de nosotros')"
+                            class="hover:text-brand-500 transition-colors cursor-pointer">Acerca de nosotros</a></li>
+                    <li><a href="javascript:void(0)" onclick="showComingSoon('Registro de Restaurantes')"
+                            class="hover:text-brand-500 transition-colors cursor-pointer">Registra tu restaurante</a>
+                    </li>
+                    <li><a href="javascript:void(0)" onclick="showComingSoon('Registro de Repartidores')"
+                            class="hover:text-brand-500 transition-colors cursor-pointer">Conviértete en repartidor</a>
+                    </li>
                 </ul>
             </div>
             <div>
                 <h4 class="text-white font-bold mb-4 text-sm">Ayuda Legal</h4>
                 <ul class="space-y-2 text-xs">
-                    <li><a href="#" class="hover:text-brand-500 transition-colors">Soporte y Contacto</a></li>
-                    <li><a href="#" class="hover:text-brand-500 transition-colors">Términos y Condiciones</a></li>
-                    <li><a href="#" class="hover:text-brand-500 transition-colors">Aviso de Privacidad</a></li>
+                    <li><a href="javascript:void(0)" onclick="showComingSoon('Soporte y Contacto')"
+                            class="hover:text-brand-500 transition-colors cursor-pointer">Soporte y Contacto</a></li>
+                    <li><a href="javascript:void(0)" onclick="showComingSoon('Términos y Condiciones')"
+                            class="hover:text-brand-500 transition-colors cursor-pointer">Términos y Condiciones</a>
+                    </li>
+                    <li><a href="javascript:void(0)" onclick="showComingSoon('Aviso de Privacidad')"
+                            class="hover:text-brand-500 transition-colors cursor-pointer">Aviso de Privacidad</a></li>
                 </ul>
             </div>
             <div>
                 <h4 class="text-white font-bold mb-4 text-sm">Descarga la App</h4>
                 <div class="space-y-3">
-                    <button
-                        class="w-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center gap-2 py-2.5 rounded-xl transition-colors border border-slate-700">
+                    <button onclick="showComingSoon('App Store')"
+                        class="w-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center gap-2 py-2.5 rounded-xl transition-colors border border-slate-700 active:scale-95">
                         <i data-lucide="apple" class="w-4 h-4"></i> <span class="text-xs font-bold">App Store</span>
                     </button>
-                    <button
-                        class="w-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center gap-2 py-2.5 rounded-xl transition-colors border border-slate-700">
+                    <button onclick="showComingSoon('Google Play')"
+                        class="w-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center gap-2 py-2.5 rounded-xl transition-colors border border-slate-700 active:scale-95">
                         <i data-lucide="play" class="w-4 h-4"></i> <span class="text-xs font-bold">Google Play</span>
                     </button>
                 </div>
@@ -181,11 +197,12 @@
             class="max-w-5xl mx-auto px-6 mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p>&copy; 2026 SaborOfertas. Todos los derechos reservados.</p>
             <div class="flex gap-4">
-                <a href="#" class="hover:text-white transition-colors"><i data-lucide="facebook"
-                        class="w-4 h-4"></i></a>
-                <a href="#" class="hover:text-white transition-colors"><i data-lucide="instagram"
-                        class="w-4 h-4"></i></a>
-                <a href="#" class="hover:text-white transition-colors"><i data-lucide="twitter" class="w-4 h-4"></i></a>
+                <button onclick="showComingSoon('Facebook')" class="hover:text-white transition-colors"><i
+                        data-lucide="facebook" class="w-4 h-4"></i></button>
+                <button onclick="showComingSoon('Instagram')" class="hover:text-white transition-colors"><i
+                        data-lucide="instagram" class="w-4 h-4"></i></button>
+                <button onclick="showComingSoon('Twitter/X')" class="hover:text-white transition-colors"><i
+                        data-lucide="twitter" class="w-4 h-4"></i></button>
             </div>
         </div>
     </footer>
@@ -258,11 +275,11 @@
         <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-3">
             <h3 class="font-extrabold text-lg text-center">Selecciona tu ubicación</h3>
             <button onclick="requestGeolocation()"
-                class="w-full text-center px-4 py-3 bg-brand-50 text-brand-600 font-black rounded-xl border border-brand-200 flex justify-center gap-2">
+                class="w-full text-center px-4 py-3 bg-brand-50 text-brand-600 font-black rounded-xl border border-brand-200 flex justify-center gap-2 active:scale-95 transition-transform">
                 <i data-lucide="navigation" class="w-5 h-5"></i> Usar mi ubicación actual
             </button>
             <button onclick="selectCity('Morelia, Mich.')"
-                class="w-full text-center px-4 py-3 bg-slate-50 font-semibold rounded-xl border border-slate-100">Morelia,
+                class="w-full text-center px-4 py-3 bg-slate-50 hover:bg-slate-100 font-semibold rounded-xl border border-slate-100">Morelia,
                 Mich.</button>
             <button onclick="toggleLocationModal()"
                 class="w-full mt-2 bg-slate-900 text-white font-bold py-3 rounded-xl">Cancelar</button>
@@ -284,7 +301,8 @@
                 <div class="flex justify-between text-lg font-black pt-2 border-t border-slate-200">
                     <span>Total</span><span id="cart-total">$0.00 MXN</span></div>
                 <button onclick="checkout()"
-                    class="w-full bg-slate-900 text-white font-black py-3.5 rounded-xl mt-2">Proceder al Pago</button>
+                    class="w-full bg-slate-900 hover:bg-black text-white font-black py-3.5 rounded-xl mt-2 active:scale-95 transition-transform">Proceder
+                    al Pago</button>
             </div>
         </div>
     </div>
@@ -321,7 +339,7 @@
             </div>
 
             <button onclick="addToCartFromModal()"
-                class="w-full bg-brand-500 text-white font-black py-3 rounded-xl mt-4 flex items-center justify-center gap-2">
+                class="w-full bg-brand-500 hover:bg-brand-600 text-white font-black py-3 rounded-xl mt-4 flex items-center justify-center gap-2 active:scale-95 transition-transform">
                 <i data-lucide="shopping-cart" class="w-5 h-5"></i> Agregar al Carrito
             </button>
         </div>

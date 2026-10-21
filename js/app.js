@@ -38,16 +38,14 @@ window.onload = async function () {
         categories = await catsResponse.json();
         const apiDeals = await dealsResponse.json();
 
-        // Limpieza de datos y corrección de temporizadores para evitar el estado "Expirado"
         dealsData = apiDeals.map(deal => {
             if (!deal.expiresIn || deal.expiresIn <= 0) {
-                deal.expiresIn = Math.floor(Math.random() * 10800) + 3600; // Asigna entre 1 y 4 horas
+                deal.expiresIn = Math.floor(Math.random() * 10800) + 3600;
             }
             return deal;
         });
 
         renderCategories();
-
         await fetchLocalMoreliaAPI();
 
         renderFlashDeals();
@@ -538,7 +536,7 @@ function startCountdowns() {
                 const s = (seconds % 60).toString().padStart(2, '0');
                 timer.innerText = `${h}:${m}:${s}`;
             } else {
-                timer.innerText = '00:00:00'; // Evita que se vea el feo "Expirado" si llega a cero
+                timer.innerText = '00:00:00';
             }
         });
     }, 1000);
@@ -687,7 +685,7 @@ function triggerApiSync() {
 function showToast(message) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    toast.className = 'bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 transform transition-all duration-300 translate-y-full opacity-0 border border-slate-700 pointer-events-auto';
+    toast.className = 'bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 transform transition-all duration-300 translate-y-full opacity-0 border border-slate-700 pointer-events-auto z-[9999]';
     toast.innerHTML = `<span>${message}</span>`;
     container.appendChild(toast);
 
@@ -696,4 +694,21 @@ function showToast(message) {
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// NUEVAS FUNCIONES DE NAVEGACIÓN
+function scrollToOfertas() {
+    const section = document.getElementById('ofertas-section');
+    if (section) {
+        // Obtenemos la posición de la sección menos el espacio del header (aprox 80px)
+        const offsetTop = section.getBoundingClientRect().top + window.scrollY - 90;
+        window.scrollTo({
+            top: offsetTop,
+            behavior: 'smooth'
+        });
+    }
+}
+
+function showComingSoon(featureName) {
+    showToast(`🚀 Abriendo ${featureName}...`);
 }
