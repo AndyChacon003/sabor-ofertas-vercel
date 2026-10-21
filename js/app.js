@@ -39,6 +39,8 @@ window.onload = async function () {
         dealsData = await dealsResponse.json();
 
         renderCategories();
+
+        // Cargar catálogo extendido de Morelia
         await fetchLocalMoreliaAPI();
 
         renderFlashDeals();
@@ -57,17 +59,39 @@ window.onload = async function () {
     });
 };
 
+// Simulador de API Masiva para la Red de Morelia
 async function fetchLocalMoreliaAPI() {
     const moreliaLocalData = [
-        { id: 'mrl-1', title: 'Tacos Pastor y Suadero (Orden)', restaurant: 'Taquería El Infierno', category: 'tacos', image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80', badge: 'MÁS PEDIDO', discountType: '2x1', originalPrice: 180, discountPrice: 90, rating: 4.8, reviews: 3100, distance: 1.1, expiresIn: 3600 * 5, isFlash: true, couponCode: 'INF2X1', apiSource: 'Morelia Local Network', address: 'Av. Madero Poniente', description: 'Nuestros clásicos tacos al pastor con doble tortilla, piña, cilantro y cebolla.', terms: 'Aplica en todas las sucursales.', isExternalAPI: true },
-        { id: 'mrl-2', title: 'Uchepos con Crema y Queso', restaurant: 'Restaurante San Miguelito', category: 'saludable', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80', badge: 'TRADICIONAL', discountType: 'shipping', originalPrice: 160, discountPrice: 130, rating: 4.9, reviews: 890, distance: 2.8, expiresIn: 3600 * 10, isFlash: false, couponCode: 'MIGUEL130', apiSource: 'Morelia Local Network', address: 'Av. Camelinas', description: 'Auténticos uchepos michoacanos bañados en salsa verde, crema de rancho y queso.', terms: 'Sujeto a disponibilidad.', isExternalAPI: true },
-        { id: 'mrl-3', title: 'Hamburguesa Doble Smash', restaurant: 'Smash Burger Lab', category: 'hamburguesas', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', badge: 'EXCLUSIVO', discountType: '30plus', originalPrice: 210, discountPrice: 147, rating: 4.9, reviews: 512, distance: 1.4, expiresIn: 3600 * 2, isFlash: true, couponCode: 'SMASH30', apiSource: 'Morelia Local Network', address: 'Boulevard Chiquimitio', description: 'Doble carne de res smash, queso cheddar, tocino y aderezo especial.', terms: 'No incluye papas.', isExternalAPI: true },
-        { id: 'mrl-4', title: 'Sushi Empanizado Mar y Tierra', restaurant: 'Sushi Itto Camelinas', category: 'sushi', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80', badge: 'GOURMET', discountType: '2x1', originalPrice: 220, discountPrice: 110, rating: 4.6, reviews: 340, distance: 3.5, expiresIn: 3600 * 6, isFlash: false, couponCode: 'SUSHI2X1', apiSource: 'Morelia Local Network', address: 'Plaza Camelinas', description: 'Rollo empanizado relleno de camarón, res y queso crema.', terms: 'Válido solo en comedor o pick-up.', isExternalAPI: true }
+        // TACOS Y ANTOJITOS (Morelia Clásicos)
+        { id: 'mrl-1', title: 'Tacos Pastor y Suadero (Orden 5)', restaurant: 'Taquería El Infierno', category: 'tacos', image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80', badge: 'MÁS PEDIDO', discountType: '2x1', originalPrice: 180, discountPrice: 90, rating: 4.8, reviews: 3100, distance: 1.1, expiresIn: 3600 * 5, isFlash: true, couponCode: 'INF2X1', apiSource: 'SaborOfertas Cloud', address: 'Av. Madero Poniente', description: 'Nuestros clásicos tacos al pastor con doble tortilla, piña, cilantro y cebolla.' },
+        { id: 'mrl-2', title: 'Uchepos con Crema y Queso', restaurant: 'Restaurante San Miguelito', category: 'tacos', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80', badge: 'TRADICIONAL', discountType: 'shipping', originalPrice: 160, discountPrice: 130, rating: 4.9, reviews: 890, distance: 2.8, expiresIn: 3600 * 10, isFlash: false, couponCode: 'MIGUEL130', apiSource: 'SaborOfertas Cloud', address: 'Av. Camelinas', description: 'Auténticos uchepos michoacanos bañados en salsa verde, crema de rancho y queso cotija.' },
+        { id: 'mrl-5', title: '1/2 Kilo de Carnitas Estilo Quiroga', restaurant: 'Carnitas Don Raúl', category: 'tacos', image: 'https://images.unsplash.com/photo-1627308595229-7830f5c92258?auto=format&fit=crop&w=600&q=80', badge: 'DOMINGUERO', discountType: '30plus', originalPrice: 240, discountPrice: 168, rating: 4.9, reviews: 4200, distance: 4.2, expiresIn: 3600 * 8, isFlash: false, couponCode: 'RAUL168', apiSource: 'SaborOfertas Cloud', address: 'Salida a Quiroga', description: 'Maciza, costilla y cuerito. Incluye tortillas hechas a mano, salsas y limones.' },
+        { id: 'mrl-6', title: 'Enchiladas Placeras Michoacanas', restaurant: 'Cenaduría Lupita', category: 'tacos', image: 'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=600&q=80', badge: 'CENA', discountType: 'shipping', originalPrice: 110, discountPrice: 85, rating: 4.7, reviews: 650, distance: 1.8, expiresIn: 3600 * 3, isFlash: true, couponCode: 'LUPITA85', apiSource: 'SaborOfertas Cloud', address: 'Colonia Ventura Puente', description: 'Con papa, zanahoria, pollo dorado y mucho queso cotija.' },
+
+        // HAMBURGUESAS Y PIZZAS
+        { id: 'mrl-3', title: 'Hamburguesa Doble Smash', restaurant: 'Smash Burger Lab', category: 'hamburguesas', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', badge: 'EXCLUSIVO', discountType: '30plus', originalPrice: 210, discountPrice: 147, rating: 4.9, reviews: 512, distance: 1.4, expiresIn: 3600 * 2, isFlash: true, couponCode: 'SMASH30', apiSource: 'SaborOfertas Cloud', address: 'Boulevard Chiquimitio', description: 'Doble carne de res smash, queso cheddar, tocino y aderezo especial.' },
+        { id: 'mrl-7', title: 'Pizza a la Leña 4 Quesos', restaurant: 'Pizzería Lasagna', category: 'pizzas', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80', badge: 'ARTESANAL', discountType: '2x1', originalPrice: 280, discountPrice: 140, rating: 4.8, reviews: 1120, distance: 3.1, expiresIn: 3600 * 4, isFlash: true, couponCode: 'PIZZA2X1', apiSource: 'SaborOfertas Cloud', address: 'Centro Histórico', description: 'Masa madre, mezcla de provolone, mozzarella, parmesano y gorgonzola al horno de piedra.' },
+        { id: 'mrl-8', title: 'Combo Alitas BBQ (10 pzas)', restaurant: 'Wings Army Morelia', category: 'hamburguesas', image: 'https://images.unsplash.com/photo-1608039829572-78524f79c4c7?auto=format&fit=crop&w=600&q=80', badge: 'PROMO', discountType: 'shipping', originalPrice: 190, discountPrice: 160, rating: 4.5, reviews: 890, distance: 2.2, expiresIn: 3600 * 12, isFlash: false, couponCode: 'WINGS160', apiSource: 'SaborOfertas Cloud', address: 'Plaza Las Américas', description: 'Alitas bañadas en salsa BBQ dulce, acompañadas de apio y aderezo ranch.' },
+
+        // SUSHI Y MARISCOS
+        { id: 'mrl-4', title: 'Sushi Empanizado Mar y Tierra', restaurant: 'Sushi Itto Camelinas', category: 'sushi', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80', badge: 'GOURMET', discountType: '2x1', originalPrice: 220, discountPrice: 110, rating: 4.6, reviews: 340, distance: 3.5, expiresIn: 3600 * 6, isFlash: false, couponCode: 'SUSHI2X1', apiSource: 'SaborOfertas Cloud', address: 'Plaza Camelinas', description: 'Rollo empanizado relleno de camarón, res y queso crema.' },
+        { id: 'mrl-9', title: 'Aguachile Verde de Camarón', restaurant: 'Mariscos El Pirata', category: 'saludable', image: 'https://images.unsplash.com/photo-1599021456807-25e0f117c0df?auto=format&fit=crop&w=600&q=80', badge: 'FRESCO', discountType: '30plus', originalPrice: 260, discountPrice: 182, rating: 4.8, reviews: 670, distance: 5.1, expiresIn: 3600 * 7, isFlash: false, couponCode: 'PIRA182', apiSource: 'SaborOfertas Cloud', address: 'Periférico Paseo de la República', description: 'Camarón curtido en limón con chile serrano, pepino, cebolla morada y tostadas.' },
+        { id: 'mrl-10', title: 'Tazón Poke de Salmón', restaurant: 'Ono Poke Bar', category: 'sushi', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80', badge: 'FITNESS', discountType: 'shipping', originalPrice: 210, discountPrice: 190, rating: 4.9, reviews: 210, distance: 2.0, expiresIn: 3600 * 24, isFlash: false, couponCode: 'POKE190', apiSource: 'SaborOfertas Cloud', address: 'Boulevard García de León', description: 'Base de arroz al vapor, salmón fresco, edamames, aguacate, mango y aderezo spicy.' },
+
+        // POSTRES Y CAFÉ
+        { id: 'mrl-11', title: 'Gaspacho Tradicional Grande', restaurant: 'Gaspachos El Güero de la Merced', category: 'postres', image: 'https://images.unsplash.com/photo-1481391319762-47dff72954d9?auto=format&fit=crop&w=600&q=80', badge: 'LOCAL', discountType: '2x1', originalPrice: 90, discountPrice: 45, rating: 4.9, reviews: 5600, distance: 0.8, expiresIn: 3600 * 4, isFlash: true, couponCode: 'GUERO45', apiSource: 'SaborOfertas Cloud', address: 'Andrés Quintana Roo', description: 'El original. Jícama, mango y piña finamente picados con queso, cebolla, chile negro y jugo de naranja.' },
+        { id: 'mrl-12', title: 'Frappé de Mazapán & Rebanada de Pastel', restaurant: 'Café del Olmo', category: 'postres', image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80', badge: 'SWEET', discountType: '30plus', originalPrice: 150, discountPrice: 105, rating: 4.7, reviews: 320, distance: 1.2, expiresIn: 3600 * 5, isFlash: false, couponCode: 'OLMO105', apiSource: 'SaborOfertas Cloud', address: 'Benito Juárez, Centro', description: 'Bebida frappeada con auténtico mazapán de la rosa, crema batida y pastel de chocolate.' },
+        { id: 'mrl-13', title: 'Caja de Donas Gourmet (6 pzas)', restaurant: 'Donut Maker', category: 'postres', image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=600&q=80', badge: 'OFERTA', discountType: 'shipping', originalPrice: 180, discountPrice: 140, rating: 4.8, reviews: 890, distance: 3.8, expiresIn: 3600 * 9, isFlash: false, couponCode: 'DONA140', apiSource: 'SaborOfertas Cloud', address: 'Plaza Escala Morelia', description: 'Selección del chef con glaseado de maple, chocolate belga, matcha y red velvet.' },
+
+        // CORTES Y ESPECIALIDADES
+        { id: 'mrl-14', title: 'Corte Rib Eye 400g con Guarnición', restaurant: 'La Cueva de Chucho', category: 'saludable', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80', badge: 'PREMIUM', discountType: '30plus', originalPrice: 450, discountPrice: 315, rating: 4.9, reviews: 150, distance: 4.5, expiresIn: 3600 * 6, isFlash: true, couponCode: 'RIB315', apiSource: 'SaborOfertas Cloud', address: 'Altozano', description: 'Corte calidad Angus término a elegir, acompañado de papas al romero y vegetales asados.' },
+        { id: 'mrl-15', title: 'Chilaquiles Verdes con Arrachera', restaurant: 'Panoli', category: 'tacos', image: 'https://images.unsplash.com/photo-1640719028782-42bbba2eb2e8?auto=format&fit=crop&w=600&q=80', badge: 'DESAYUNO', discountType: 'shipping', originalPrice: 180, discountPrice: 150, rating: 4.6, reviews: 410, distance: 2.1, expiresIn: 3600 * 14, isFlash: false, couponCode: 'PANOLI15', apiSource: 'SaborOfertas Cloud', address: 'Acueducto', description: 'Totopos horneados bañados en salsa verde tatemada, 150g de arrachera, crema y cebolla.' }
     ];
 
     dealsData = [...dealsData, ...moreliaLocalData];
 }
 
+// LÓGICA DE GEOLOCALIZACIÓN
 function requestGeolocation() {
     showToast('📍 Obteniendo ubicación GPS...');
 
@@ -104,6 +128,7 @@ function requestGeolocation() {
     }
 }
 
+// LÓGICA DEL MODAL DE DETALLES, MAPA Y QR
 function openCouponModal(dealId) {
     const deal = dealsData.find(d => d.id === dealId);
     if (!deal) return;
@@ -142,7 +167,7 @@ function closeCouponModal() {
     document.getElementById('coupon-modal').classList.remove('flex');
 }
 
-// FUNCIONES DEL CARRITO
+// FUNCIONES DEL CARRITO DE COMPRAS
 function toggleCartDrawer() {
     const drawer = document.getElementById('cart-drawer');
     if (drawer.classList.contains('hidden')) {
@@ -380,7 +405,7 @@ function updateAuthUI() {
     }
 }
 
-// FUNCIONES DE UI, RENDERIZADO Y FILTROS
+// FUNCIONES DE INTERFAZ Y RENDERIZADO
 function renderCategories() {
     const container = document.getElementById('category-chips');
     container.innerHTML = categories.map(cat => {
