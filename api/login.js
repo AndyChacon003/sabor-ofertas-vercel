@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import bcrypt from 'bcryptjs';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 
@@ -8,20 +9,28 @@ export default async function handler(req, res) {
     const { correo, password } = req.body;
 
     try {
-        const result = await pool.query('SELECT * FROM usuarios WHERE correo = $1 AND password = $2', [correo, password]);
+        const result = await pool.query('SELECT * FROM usuarios WHERE correo = $1', [correo]);
+
         if (result.rows.length === 0) {
-            return res.status(400).json({ success: false, message: 'Correo o contraseña incorrectos.' });
+            return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
         }
 
         const usuario = result.rows[0];
 
-        // Validamos si ya verificó su correo
-        if (!usuario.verificado) {
-            return res.status(403).json({ success: false, message: 'Debes verificar tu correo antes de iniciar sesión.' });
+        // Validar contraseña cifrada
+        const passwordCorrecto = await bcrypt.compare(password, usuario.password);
+        if (!passwordCorrecto) {
+            return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
+        }
+
+        // Regla estricta del profesor: Bloquear login sin confirmación
+        if (!usuario.email_verified) {
+            return res.status(403).json({ success: false, message: 'Confirma tu correo antes de iniciar sesión.' });
         }
 
         return res.status(200).json({ success: true, user: { id: usuario.id, name: usuario.nombre, email: usuario.correo } });
     } catch (err) {
+        console.error(err);
         return res.status(500).json({ success: false, message: 'Error al iniciar sesión.' });
     }
 }

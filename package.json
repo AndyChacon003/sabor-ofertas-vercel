@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "nodemailer": "^10.1.7",
     "pg": "^8.23.1"
   }

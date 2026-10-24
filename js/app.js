@@ -11,9 +11,20 @@ let categories = [];
 let dealsData = [];
 let cart = [];
 let currentViewingDealId = null;
-let pendingVerificationEmail = null;
 
 window.onload = async function () {
+    // NUEVA LÓGICA DE VERIFICACIÓN (Al regresar del correo)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('verified') === 'success') {
+        showToast("✅ ¡Correo confirmado! Ya puedes iniciar sesión.");
+        toggleAuthModal();
+        switchAuthMode('login');
+        window.history.replaceState({}, document.title, "/"); // Limpia la URL
+    } else if (urlParams.get('verified') === 'expired') {
+        showToast("❌ El enlace de verificación es inválido o expiró.");
+        window.history.replaceState({}, document.title, "/");
+    }
+
     const savedUser = localStorage.getItem('sabor_user');
     if (savedUser) {
         try {
@@ -88,7 +99,6 @@ async function fetchLocalMoreliaAPI() {
 
 function requestGeolocation() {
     showToast('📍 Obteniendo ubicación GPS...');
-
     if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -108,18 +118,11 @@ function requestGeolocation() {
                 if (sortSelect) sortSelect.value = 'distance';
 
                 handleSortChange('distance');
-
-                setTimeout(() => triggerApiSync(), 800);
             },
-            (error) => {
-                console.error("Error GPS:", error);
-                showToast('❌ Permiso de ubicación denegado.');
-            },
+            (error) => { showToast('❌ Permiso de ubicación denegado.'); },
             { enableHighAccuracy: true, timeout: 5000 }
         );
-    } else {
-        showToast('❌ Navegador no soporta GPS.');
-    }
+    } else { showToast('❌ Navegador no soporta GPS.'); }
 }
 
 function openCouponModal(dealId) {
@@ -145,8 +148,7 @@ function openCouponModal(dealId) {
         cliente: currentUser ? currentUser.name : "Invitado"
     };
     const qrString = encodeURIComponent(JSON.stringify(qrDataObj));
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrString}`;
-    document.getElementById('modal-qr-container').innerHTML = `<img src="${qrUrl}" alt="QR Code" class="w-32 h-32 object-contain">`;
+    document.getElementById('modal-qr-container').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrString}" alt="QR" class="w-32 h-32 object-contain">`;
 
     document.getElementById('coupon-modal').classList.remove('hidden');
     document.getElementById('coupon-modal').classList.add('flex');
@@ -193,8 +195,7 @@ function removeFromCart(dealId) {
 }
 
 function updateCartCounter() {
-    const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
-    document.getElementById('cart-counter').innerText = totalItems;
+    document.getElementById('cart-counter').innerText = cart.reduce((acc, item) => acc + item.quantity, 0);
 }
 
 function renderCart() {
@@ -202,12 +203,7 @@ function renderCart() {
     let subtotal = 0;
 
     if (cart.length === 0) {
-        list.innerHTML = `
-            <div class="text-center py-10 text-slate-400 space-y-2">
-                <i data-lucide="shopping-cart" class="w-12 h-12 mx-auto opacity-30"></i>
-                <p class="font-bold">Tu carrito está vacío</p>
-                <p class="text-xs">¡Agrega platillos deliciosos para continuar!</p>
-            </div>`;
+        list.innerHTML = `<div class="text-center py-10 text-slate-400 space-y-2"><i data-lucide="shopping-cart" class="w-12 h-12 mx-auto opacity-30"></i><p class="font-bold">Tu carrito está vacío</p></div>`;
         document.getElementById('cart-subtotal').innerText = "$0.00 MXN";
         document.getElementById('cart-total').innerText = "$0.00 MXN";
         lucide.createIcons();
@@ -221,15 +217,12 @@ function renderCart() {
             <img src="${item.image}" class="w-16 h-16 rounded-xl object-cover">
             <div class="flex-1 min-w-0">
                 <h4 class="text-xs font-bold text-slate-800 truncate">${item.title}</h4>
-                <p class="text-[10px] text-slate-500">${item.restaurant}</p>
                 <div class="flex justify-between items-center mt-1.5">
                     <span class="text-sm font-black text-brand-600">$${item.discountPrice}</span>
                     <span class="text-xs font-bold bg-white px-2 py-0.5 rounded shadow-sm">Cant: ${item.quantity}</span>
                 </div>
             </div>
-            <button onclick="removeFromCart('${item.id}')" class="absolute -top-2 -right-2 bg-red-100 hover:bg-red-500 hover:text-white text-red-500 p-1.5 rounded-full transition-colors">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
+            <button onclick="removeFromCart('${item.id}')" class="absolute -top-2 -right-2 bg-red-100 text-red-500 p-1.5 rounded-full"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
         </div>`;
     }).join('');
 
@@ -239,10 +232,7 @@ function renderCart() {
 }
 
 function checkout() {
-    if (cart.length === 0) {
-        showToast("⚠️ Tu carrito está vacío.");
-        return;
-    }
+    if (cart.length === 0) return showToast("⚠️ Tu carrito está vacío.");
     if (!currentUser) {
         toggleCartDrawer();
         showToast("Debes iniciar sesión para procesar tu pago.");
@@ -250,43 +240,20 @@ function checkout() {
         return;
     }
     showToast("💳 Redirigiendo a pasarela de pago segura...");
-    cart = [];
-    updateCartCounter();
-    toggleCartDrawer();
+    cart = []; updateCartCounter(); toggleCartDrawer();
 }
 
 function toggleAuthModal() {
     const modal = document.getElementById('auth-modal');
-    if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    } else {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
+    modal.classList.toggle('hidden');
+    modal.classList.toggle('flex');
 }
 
 function switchAuthMode(mode) {
     isRegisterMode = (mode === 'register');
-    const nameField = document.getElementById('name-field-container');
-    const title = document.getElementById('auth-modal-title');
-    const submitBtn = document.getElementById('auth-submit-btn');
-    const tabLogin = document.getElementById('tab-login');
-    const tabRegister = document.getElementById('tab-register');
-
-    if (isRegisterMode) {
-        nameField.classList.remove('hidden');
-        title.innerText = 'Crear Cuenta';
-        submitBtn.innerText = 'Registrarse';
-        tabRegister.className = 'flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all';
-        tabLogin.className = 'flex-1 py-2 rounded-lg text-slate-500 transition-all';
-    } else {
-        nameField.classList.add('hidden');
-        title.innerText = 'Iniciar Sesión';
-        submitBtn.innerText = 'Acceder';
-        tabLogin.className = 'flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-900 transition-all';
-        tabRegister.className = 'flex-1 py-2 rounded-lg text-slate-500 transition-all';
-    }
+    document.getElementById('name-field-container').classList.toggle('hidden', !isRegisterMode);
+    document.getElementById('auth-modal-title').innerText = isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesión';
+    document.getElementById('auth-submit-btn').innerText = isRegisterMode ? 'Registrarse' : 'Acceder';
 }
 
 async function submitAuthForm() {
@@ -294,10 +261,7 @@ async function submitAuthForm() {
     const password = document.getElementById('auth-password').value.trim();
     const name = document.getElementById('auth-name').value.trim();
 
-    if (!email || !password || (isRegisterMode && !name)) {
-        showToast('⚠️ Por favor completa todos los campos.');
-        return;
-    }
+    if (!email || !password || (isRegisterMode && !name)) return showToast('⚠️ Por favor completa todos los campos.');
 
     const endpoint = isRegisterMode ? '/api/register' : '/api/login';
     const payload = isRegisterMode ? { nombre: name, correo: email, password } : { correo: email, password };
@@ -311,56 +275,27 @@ async function submitAuthForm() {
 
         const data = await response.json();
 
+        // 5. Manejo del código de error específico 403 que pide el profesor
+        if (response.status === 403) {
+            showToast(`⚠️ ${data.message}`);
+            return;
+        }
+
         if (data.success) {
             currentUser = data.user;
             localStorage.setItem('sabor_user', JSON.stringify(currentUser));
             updateAuthUI();
             toggleAuthModal();
-            showToast(isRegisterMode ? '🎉 ¡Cuenta creada con éxito!' : `👋 ¡Bienvenido de nuevo, ${currentUser.name}!`);
+            showToast(`👋 ¡Bienvenido, ${currentUser.name}!`);
         } else if (data.requires_verification) {
-            pendingVerificationEmail = email;
             toggleAuthModal();
-            document.getElementById('verify-email-display').innerText = email;
-            document.getElementById('verify-modal').classList.remove('hidden');
-            document.getElementById('verify-modal').classList.add('flex');
-            showToast('📧 Revisa tu correo electrónico.');
-        } else {
-            showToast(`❌ ${data.message || 'Ocurrió un error.'}`);
-        }
-    } catch (err) {
-        console.error(err);
-        showToast('❌ Error de conexión con el servidor.');
-    }
-}
-
-async function submitVerification() {
-    const code = document.getElementById('verify-code-input').value.trim();
-    if (!code) return showToast("Ingresa el código");
-
-    try {
-        const res = await fetch('/api/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ correo: pendingVerificationEmail, codigo: code })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            closeVerifyModal();
-            showToast("✅ Cuenta verificada, ya puedes iniciar sesión.");
-            toggleAuthModal();
-            switchAuthMode('login');
+            showToast('📧 Revisa tu correo electrónico para confirmar tu cuenta.');
         } else {
             showToast(`❌ ${data.message}`);
         }
     } catch (err) {
-        showToast("Error de red al verificar.");
+        showToast('❌ Error de conexión con el servidor.');
     }
-}
-
-function closeVerifyModal() {
-    document.getElementById('verify-modal').classList.add('hidden');
-    document.getElementById('verify-modal').classList.remove('flex');
 }
 
 function handleLogout() {
@@ -372,68 +307,39 @@ function handleLogout() {
 }
 
 function updateAuthUI() {
-    const btnText = document.getElementById('auth-btn-text');
-    const formContainer = document.getElementById('auth-form-container');
-    const userInfo = document.getElementById('auth-user-info');
-    const modalTitle = document.getElementById('auth-modal-title');
-
     if (currentUser && currentUser.name) {
-        btnText.innerText = currentUser.name.split(' ')[0];
-        modalTitle.innerText = 'Mi Cuenta';
-        formContainer.classList.add('hidden');
-        userInfo.classList.remove('hidden');
+        document.getElementById('auth-btn-text').innerText = currentUser.name.split(' ')[0];
+        document.getElementById('auth-modal-title').innerText = 'Mi Cuenta';
+        document.getElementById('auth-form-container').classList.add('hidden');
+        document.getElementById('auth-user-info').classList.remove('hidden');
         document.getElementById('display-user-name').innerText = currentUser.name;
         document.getElementById('display-user-email').innerText = currentUser.email;
-        const initials = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        document.getElementById('user-avatar-initials').innerText = initials;
+        document.getElementById('user-avatar-initials').innerText = currentUser.name.substring(0, 2).toUpperCase();
     } else {
-        btnText.innerText = 'Iniciar Sesión';
-        modalTitle.innerText = 'Iniciar Sesión';
-        formContainer.classList.remove('hidden');
-        userInfo.classList.add('hidden');
+        document.getElementById('auth-btn-text').innerText = 'Iniciar Sesión';
+        document.getElementById('auth-modal-title').innerText = 'Iniciar Sesión';
+        document.getElementById('auth-form-container').classList.remove('hidden');
+        document.getElementById('auth-user-info').classList.add('hidden');
     }
 }
 
 function renderCategories() {
     const container = document.getElementById('category-chips');
-    container.innerHTML = categories.map(cat => {
-        const isActive = cat.id === selectedCategory;
-        return `
-            <button onclick="selectCategory('${cat.id}')" 
-                    class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all ${isActive
-                ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }">
-                <span>${cat.label}</span>
-            </button>
-        `;
-    }).join('');
+    container.innerHTML = categories.map(cat => `<button onclick="selectCategory('${cat.id}')" class="shrink-0 flex items-center px-4 py-2 rounded-2xl text-xs font-bold transition-all ${cat.id === selectedCategory ? 'bg-brand-500 text-white' : 'bg-white text-slate-600'}"><span>${cat.label}</span></button>`).join('');
 }
-
-function selectCategory(catId) {
-    selectedCategory = catId;
-    renderCategories();
-    renderDealsGrid();
-}
+function selectCategory(catId) { selectedCategory = catId; renderCategories(); renderDealsGrid(); }
 
 function renderFlashDeals() {
     const container = document.getElementById('flash-deals-container');
     const flashItems = dealsData.filter(d => d.isFlash).slice(0, 2);
-
     container.innerHTML = flashItems.map(deal => `
-        <div onclick="openCouponModal('${deal.id}')" class="cursor-pointer bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl p-3 border border-white/20 transition-all flex gap-3 items-center group">
-            <img src="${deal.image}" alt="${deal.title}" class="w-16 h-16 rounded-xl object-cover shadow-md group-hover:scale-105 transition-transform">
+        <div onclick="openCouponModal('${deal.id}')" class="cursor-pointer bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl p-3 border border-white/20 flex gap-3 items-center group">
+            <img src="${deal.image}" class="w-16 h-16 rounded-xl object-cover">
             <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between text-[11px] text-yellow-300 font-bold mb-0.5">
-                    <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> <span class="countdown-timer" data-expires="${deal.expiresIn}">--:--:--</span></span>
-                    <span class="bg-white text-brand-600 px-1.5 py-0.2 rounded font-extrabold text-[10px]">${deal.badge}</span>
-                </div>
+                <div class="flex justify-between text-[11px] text-yellow-300 font-bold mb-0.5"><span class="countdown-timer" data-expires="${deal.expiresIn}">--:--:--</span><span class="bg-white text-brand-600 px-1.5 rounded">${deal.badge}</span></div>
                 <h4 class="text-xs font-bold text-white truncate">${deal.title}</h4>
-                <p class="text-[11px] text-brand-100 truncate">${deal.restaurant}</p>
             </div>
-        </div>
-    `).join('');
-    lucide.createIcons();
+        </div>`).join('');
 }
 
 function renderDealsGrid() {
@@ -446,269 +352,92 @@ function renderDealsGrid() {
         if (selectedFilterType === '30plus' && deal.discountType !== '30plus') return false;
         if (selectedFilterType === 'shipping' && deal.discountType !== 'shipping') return false;
         if (selectedFilterType === 'flash' && !deal.isFlash) return false;
-        if (selectedFilterType === 'api' && !deal.isExternalAPI) return false;
-
-        if (searchQuery) {
-            const matchTitle = deal.title.toLowerCase().includes(searchQuery);
-            const matchRest = deal.restaurant.toLowerCase().includes(searchQuery);
-            const matchCat = deal.category.toLowerCase().includes(searchQuery);
-            if (!matchTitle && !matchRest && !matchCat) return false;
-        }
+        if (searchQuery && !deal.title.toLowerCase().includes(searchQuery) && !deal.restaurant.toLowerCase().includes(searchQuery)) return false;
         return true;
     });
 
-    if (currentSort === 'discount') {
-        filtered.sort((a, b) => (b.originalPrice - b.discountPrice) - (a.originalPrice - a.discountPrice));
-    } else if (currentSort === 'distance') {
-        filtered.sort((a, b) => a.distance - b.distance);
-    } else if (currentSort === 'rating') {
-        filtered.sort((a, b) => b.rating - a.rating);
-    }
+    if (currentSort === 'discount') filtered.sort((a, b) => (b.originalPrice - b.discountPrice) - (a.originalPrice - a.discountPrice));
+    else if (currentSort === 'distance') filtered.sort((a, b) => a.distance - b.distance);
+    else if (currentSort === 'rating') filtered.sort((a, b) => b.rating - a.rating);
 
     document.getElementById('deals-count-badge').innerText = filtered.length;
 
     if (filtered.length === 0) {
-        grid.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        emptyState.classList.add('flex');
-        return;
+        grid.innerHTML = ''; emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); return;
     }
-
-    emptyState.classList.add('hidden');
-    emptyState.classList.remove('flex');
+    emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
 
     grid.innerHTML = filtered.map(deal => {
         const isFav = favorites.has(deal.id);
         return `
             <div class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group relative">
                 <div class="relative h-44 overflow-hidden bg-slate-100">
-                    <img src="${deal.image}" alt="${deal.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <img src="${deal.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     <div class="absolute top-3 left-3 bg-brand-500 text-white font-extrabold text-xs px-2.5 py-1 rounded-xl shadow-md">${deal.badge}</div>
-                    <button onclick="toggleFavorite(event, '${deal.id}')" 
-                            class="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white backdrop-blur-md rounded-full shadow-sm transition-transform active:scale-90">
-                        <i data-lucide="heart" class="w-4 h-4 ${isFav ? 'text-brand-500 fill-brand-500' : 'text-slate-600'}"></i>
-                    </button>
-                    <div class="absolute bottom-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-medium px-2 py-0.5 rounded-lg flex items-center gap-1">
-                        <i data-lucide="navigation" class="w-3 h-3 text-brand-500"></i>
-                        <span>${deal.distance} km</span>
-                    </div>
+                    <button onclick="toggleFavorite(event, '${deal.id}')" class="absolute top-3 right-3 p-2 bg-white/80 rounded-full shadow-sm"><i data-lucide="heart" class="w-4 h-4 ${isFav ? 'text-brand-500 fill-brand-500' : 'text-slate-600'}"></i></button>
+                    <div class="absolute bottom-3 left-3 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-0.5 rounded-lg"><i data-lucide="navigation" class="w-3 h-3 inline"></i> ${deal.distance} km</div>
                 </div>
                 <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
                     <div class="space-y-1.5">
-                        <div class="flex items-center justify-between text-xs text-slate-500">
-                            <span class="font-bold text-slate-700 truncate max-w-[160px]">${deal.restaurant}</span>
-                            <span class="flex items-center gap-1 font-semibold text-amber-500">
-                                <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i> ${deal.rating} (${deal.reviews})
-                            </span>
-                        </div>
-                        <h3 class="font-bold text-slate-900 text-base leading-snug group-hover:text-brand-600 transition-colors">${deal.title}</h3>
+                        <div class="flex items-center justify-between text-xs text-slate-500"><span class="font-bold text-slate-700 truncate">${deal.restaurant}</span><span class="text-amber-500 font-semibold"><i data-lucide="star" class="w-3 h-3 inline fill-amber-400"></i> ${deal.rating}</span></div>
+                        <h3 class="font-bold text-slate-900 text-base group-hover:text-brand-600">${deal.title}</h3>
                     </div>
                     <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
                         <div>
                             <span class="text-xs text-slate-400 block -mb-1">Precio Promocional</span>
-                            <div class="flex items-baseline gap-1.5">
-                                <span class="text-xl font-extrabold text-slate-900">$${deal.discountPrice}</span>
-                                <span class="text-xs text-slate-400 line-through">$${deal.originalPrice}</span>
-                            </div>
+                            <div class="flex items-baseline gap-1.5"><span class="text-xl font-extrabold text-slate-900">$${deal.discountPrice}</span><span class="text-xs text-slate-400 line-through">$${deal.originalPrice}</span></div>
                         </div>
-                        <button onclick="openCouponModal('${deal.id}')" class="bg-slate-900 hover:bg-brand-500 text-white hover:text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
-                            <span>Ver más</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                        </button>
+                        <button onclick="openCouponModal('${deal.id}')" class="bg-slate-900 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl">Ver más</button>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join('');
     lucide.createIcons();
 }
 
 function startCountdowns() {
     setInterval(() => {
-        const timers = document.querySelectorAll('.countdown-timer');
-        timers.forEach(timer => {
-            let seconds = parseInt(timer.getAttribute('data-expires'));
-            if (seconds > 0) {
-                seconds--;
-                timer.setAttribute('data-expires', seconds);
-                const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-                const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-                const s = (seconds % 60).toString().padStart(2, '0');
-                timer.innerText = `${h}:${m}:${s}`;
-            } else {
-                timer.innerText = '00:00:00';
-            }
+        document.querySelectorAll('.countdown-timer').forEach(timer => {
+            let s = parseInt(timer.getAttribute('data-expires'));
+            if (s > 0) {
+                s--; timer.setAttribute('data-expires', s);
+                timer.innerText = `${Math.floor(s / 3600).toString().padStart(2, '0')}:${Math.floor((s % 3600) / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+            } else timer.innerText = '00:00:00';
         });
     }, 1000);
 }
 
 function toggleFavorite(event, dealId) {
     event.stopPropagation();
-    if (favorites.has(dealId)) {
-        favorites.delete(dealId);
-        showToast('Oferta removida de guardados');
-    } else {
-        favorites.add(dealId);
-        showToast('❤️ Oferta guardada en tus Favoritos');
-    }
-    updateFavCounter();
-    renderDealsGrid();
-    renderFavoritesList();
+    if (favorites.has(dealId)) { favorites.delete(dealId); showToast('Oferta removida de guardados'); }
+    else { favorites.add(dealId); showToast('❤️ Oferta guardada en tus Favoritos'); }
+    document.getElementById('fav-counter').innerText = favorites.size; renderDealsGrid(); renderFavoritesList();
 }
 
-function updateFavCounter() {
-    document.getElementById('fav-counter').innerText = favorites.size;
-}
-
-function toggleFavoritesDrawer() {
-    const drawer = document.getElementById('favorites-modal');
-    if (drawer.classList.contains('hidden')) {
-        renderFavoritesList();
-        drawer.classList.remove('hidden');
-        drawer.classList.add('flex');
-    } else {
-        drawer.classList.add('hidden');
-        drawer.classList.remove('flex');
-    }
-}
-
+function toggleFavoritesDrawer() { document.getElementById('favorites-modal').classList.toggle('hidden'); document.getElementById('favorites-modal').classList.toggle('flex'); renderFavoritesList(); }
 function renderFavoritesList() {
-    const container = document.getElementById('favorites-list');
-    const favDeals = dealsData.filter(d => favorites.has(d.id));
-
-    if (favDeals.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-10 text-slate-400 space-y-2">
-                <i data-lucide="heart-off" class="w-10 h-10 mx-auto"></i>
-                <p class="text-xs">Aún no has guardado ninguna oferta.</p>
-            </div>
-        `;
-        lucide.createIcons();
-        return;
-    }
-
-    container.innerHTML = favDeals.map(deal => `
-        <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
-            <img src="${deal.image}" class="w-14 h-14 rounded-xl object-cover">
-            <div class="flex-1 min-w-0">
-                <h4 class="text-xs font-bold text-slate-800 truncate">${deal.title}</h4>
-                <p class="text-[11px] text-slate-500">${deal.restaurant}</p>
-                <span class="text-xs font-bold text-brand-600">$${deal.discountPrice} MXN</span>
-            </div>
-            <button onclick="openCouponModal('${deal.id}')" class="bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded-lg font-semibold">
-                Ver
-            </button>
-        </div>
-    `).join('');
-    lucide.createIcons();
+    const c = document.getElementById('favorites-list');
+    const f = dealsData.filter(d => favorites.has(d.id));
+    if (f.length === 0) { c.innerHTML = `<div class="text-center py-10 text-slate-400"><p>No tienes guardados.</p></div>`; return; }
+    c.innerHTML = f.map(d => `<div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200"><img src="${d.image}" class="w-14 h-14 rounded-xl object-cover"><div class="flex-1 min-w-0"><h4 class="text-xs font-bold text-slate-800 truncate">${d.title}</h4><span class="text-xs font-bold text-brand-600">$${d.discountPrice}</span></div><button onclick="openCouponModal('${d.id}')" class="bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded-lg">Ver</button></div>`).join('');
 }
+function setFilterType(type) { selectedFilterType = type; renderDealsGrid(); }
+function handleSortChange(val) { currentSort = val; renderDealsGrid(); }
+function clearSearch() { document.getElementById('search-input').value = ''; searchQuery = ''; document.getElementById('clear-search-btn').classList.add('hidden'); renderDealsGrid(); }
+function resetFilters() { selectedCategory = 'all'; selectedFilterType = 'all'; searchQuery = ''; document.getElementById('search-input').value = ''; renderCategories(); setFilterType('all'); }
+function toggleLocationModal() { document.getElementById('location-modal').classList.toggle('hidden'); document.getElementById('location-modal').classList.toggle('flex'); }
+function selectCity(city) { currentCity = city; toggleLocationModal(); showToast(`Ubicación: ${city}`); }
 
-function setFilterType(type) {
-    selectedFilterType = type;
-    document.querySelectorAll('.filter-pill').forEach(pill => {
-        if (pill.getAttribute('data-type') === type) {
-            pill.className = 'filter-pill active px-3 py-1.5 rounded-full font-semibold bg-slate-900 text-white transition-all shadow-sm';
-        } else {
-            pill.className = 'filter-pill px-3 py-1.5 rounded-full font-medium bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition-all';
-        }
-    });
-    renderDealsGrid();
-}
-
-function handleSortChange(val) {
-    currentSort = val;
-    renderDealsGrid();
-}
-
-function clearSearch() {
-    document.getElementById('search-input').value = '';
-    searchQuery = '';
-    document.getElementById('clear-search-btn').classList.add('hidden');
-    renderDealsGrid();
-}
-
-function resetFilters() {
-    selectedCategory = 'all';
-    selectedFilterType = 'all';
-    searchQuery = '';
-    document.getElementById('search-input').value = '';
-    renderCategories();
-    setFilterType('all');
-    renderDealsGrid();
-}
-
-function toggleLocationModal() {
-    const modal = document.getElementById('location-modal');
-    modal.classList.toggle('hidden');
-}
-
-function selectCity(city) {
-    currentCity = city;
-    document.getElementById('current-location-text').innerText = city;
-    document.getElementById('mobile-location-text').innerText = city;
-    toggleLocationModal();
-    showToast(`Ubicación actualizada a ${city}`);
-    triggerApiSync();
-}
-
-function triggerApiSync() {
-    const icon = document.getElementById('sync-icon');
-    icon.classList.add('animate-spin');
-    showToast('🔄 Conectando con Red Local de Morelia...');
-
-    setTimeout(() => {
-        icon.classList.remove('animate-spin');
-        const apiSources = ['Canirac Michoacán', 'Directorio Centro', 'SaborOfertas Local'];
-        const randomSource = apiSources[Math.floor(Math.random() * apiSources.length)];
-
-        const newDeal = {
-            id: 'deal-api-' + Date.now(),
-            title: '¡Nueva Oferta! Uchepos Especiales',
-            restaurant: 'Cenaduría Centro',
-            category: 'tacos',
-            image: 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80',
-            badge: 'EN VIVO', discountType: '30plus', originalPrice: 140, discountPrice: 98,
-            rating: 5.0, reviews: 12, distance: 0.4, expiresIn: 10800, isFlash: true,
-            couponCode: 'SYNSABOR' + Math.floor(Math.random() * 900 + 100),
-            apiSource: randomSource, address: 'Centro Histórico',
-            description: 'Uchepos calientitos capturados en tiempo real.',
-            terms: 'Oferta capturada ahora.'
-        };
-
-        dealsData.unshift(newDeal);
-        renderDealsGrid();
-        renderFlashDeals();
-        showToast(`✅ ¡Sincronizado! +1 oferta desde ${randomSource}`);
-    }, 1200);
-}
-
-function showToast(message) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 transform transition-all duration-300 translate-y-full opacity-0 border border-slate-700 pointer-events-auto z-[9999]';
-    toast.innerHTML = `<span>${message}</span>`;
-    container.appendChild(toast);
-
-    setTimeout(() => toast.classList.remove('translate-y-full', 'opacity-0'), 10);
-    setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// NUEVAS FUNCIONES DE NAVEGACIÓN
 function scrollToOfertas() {
     const section = document.getElementById('ofertas-section');
     if (section) {
-        // Obtenemos la posición de la sección menos el espacio del header (aprox 80px)
         const offsetTop = section.getBoundingClientRect().top + window.scrollY - 90;
-        window.scrollTo({
-            top: offsetTop,
-            behavior: 'smooth'
-        });
+        window.scrollTo({ top: offsetTop, behavior: 'smooth' });
     }
 }
-
-function showComingSoon(featureName) {
-    showToast(`🚀 Abriendo ${featureName}...`);
+function showToast(msg) {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl z-[9999]';
+    t.innerHTML = msg; c.appendChild(t); setTimeout(() => t.remove(), 4000);
 }
