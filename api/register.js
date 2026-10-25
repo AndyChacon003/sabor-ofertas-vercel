@@ -3,7 +3,10 @@ import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+});
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -17,7 +20,6 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Verificar conexión a la base de datos primero
         const client = await pool.connect();
 
         try {
@@ -39,7 +41,6 @@ export default async function handler(req, res) {
 
             client.release();
 
-            // Intentar enviar el correo si están configuradas las credenciales
             if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
                 try {
                     const transporter = nodemailer.createTransport({
@@ -57,7 +58,7 @@ export default async function handler(req, res) {
                         html: `<h3>Bienvenido, ${nombre}</h3><p>Haz clic para confirmar:</p><a href="${verifyUrl}">Confirmar mi correo</a>`
                     });
                 } catch (mailErr) {
-                    console.error("Error enviando correo:", mailErr);
+                    console.error(mailErr);
                 }
             }
 
@@ -67,7 +68,6 @@ export default async function handler(req, res) {
             throw dbErr;
         }
     } catch (err) {
-        console.error("Error en /api/register:", err);
         return res.status(500).json({ success: false, message: 'Error interno: ' + err.message });
     }
 }

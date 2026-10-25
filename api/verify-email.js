@@ -1,7 +1,10 @@
 import { Pool } from 'pg';
 import crypto from 'crypto';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+});
 
 export default async function handler(req, res) {
     if (req.method !== 'GET') return res.status(405).json({ message: 'Método no permitido' });
@@ -9,11 +12,9 @@ export default async function handler(req, res) {
     const token = req.query.token;
     if (!token) return res.redirect('/?verified=expired');
 
-    // Cifrar el token recibido para compararlo con la base de datos
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
     try {
-        // Buscar usuario con el token vigente
         const result = await pool.query(
             'SELECT * FROM usuarios WHERE verification_token_hash = $1 AND verification_token_expires > NOW()',
             [tokenHash]
@@ -25,7 +26,6 @@ export default async function handler(req, res) {
 
         const usuario = result.rows[0];
 
-        // Confirmar correo y limpiar los campos del token
         await pool.query(
             'UPDATE usuarios SET email_verified = true, verification_token_hash = null, verification_token_expires = null WHERE id = $1',
             [usuario.id]
@@ -33,7 +33,6 @@ export default async function handler(req, res) {
 
         return res.redirect('/?verified=success');
     } catch (err) {
-        console.error("Error verificando:", err);
         return res.redirect('/?verified=error');
     }
 }
