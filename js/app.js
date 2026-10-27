@@ -13,13 +13,12 @@ let cart = [];
 let currentViewingDealId = null;
 
 window.onload = async function () {
-    // NUEVA LÓGICA DE VERIFICACIÓN (Al regresar del correo)
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('verified') === 'success') {
         showToast("✅ ¡Correo confirmado! Ya puedes iniciar sesión.");
         toggleAuthModal();
         switchAuthMode('login');
-        window.history.replaceState({}, document.title, "/"); // Limpia la URL
+        window.history.replaceState({}, document.title, "/");
     } else if (urlParams.get('verified') === 'expired') {
         showToast("❌ El enlace de verificación es inválido o expiró.");
         window.history.replaceState({}, document.title, "/");
@@ -132,7 +131,7 @@ function openCouponModal(dealId) {
     currentViewingDealId = deal.id;
 
     document.getElementById('modal-title').innerText = deal.title;
-    document.getElementById('modal-restaurant').innerHTML = `<i data-lucide="store" class="w-3.5 h-3.5"></i> ${deal.restaurant}`;
+    document.getElementById('modal-restaurant').innerHTML = `<i data-lucide="store" class="w-3.5 h-3.5 inline"></i> ${deal.restaurant}`;
     document.getElementById('modal-img').src = deal.image;
     document.getElementById('modal-badge').innerText = deal.badge;
     document.getElementById('modal-price-discount').innerText = `$${deal.discountPrice} MXN`;
@@ -275,7 +274,6 @@ async function submitAuthForm() {
 
         const data = await response.json();
 
-        // 5. Manejo del código de error específico 403 que pide el profesor
         if (response.status === 403) {
             showToast(`⚠️ ${data.message}`);
             return;
@@ -336,7 +334,7 @@ function renderFlashDeals() {
         <div onclick="openCouponModal('${deal.id}')" class="cursor-pointer bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl p-3 border border-white/20 flex gap-3 items-center group">
             <img src="${deal.image}" class="w-16 h-16 rounded-xl object-cover">
             <div class="flex-1 min-w-0">
-                <div class="flex justify-between text-[11px] text-yellow-300 font-bold mb-0.5"><span class="countdown-timer" data-expires="${deal.expiresIn}">--:--:--</span><span class="bg-white text-brand-600 px-1.5 rounded">${deal.badge}</span></div>
+                <div class="flex items-center justify-between text-[11px] text-yellow-300 font-bold mb-0.5"><span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> <span class="countdown-timer" data-expires="${deal.expiresIn}">--:--:--</span></span><span class="bg-white text-brand-600 px-1.5 rounded">${deal.badge}</span></div>
                 <h4 class="text-xs font-bold text-white truncate">${deal.title}</h4>
             </div>
         </div>`).join('');
@@ -362,10 +360,20 @@ function renderDealsGrid() {
 
     document.getElementById('deals-count-badge').innerText = filtered.length;
 
+    // Aquí era el crash fatal si empty-state no existía en el HTML
     if (filtered.length === 0) {
-        grid.innerHTML = ''; emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); return;
+        grid.innerHTML = '';
+        if (emptyState) {
+            emptyState.classList.remove('hidden');
+            emptyState.classList.add('flex');
+        }
+        return;
     }
-    emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
+
+    if (emptyState) {
+        emptyState.classList.add('hidden');
+        emptyState.classList.remove('flex');
+    }
 
     grid.innerHTML = filtered.map(deal => {
         const isFav = favorites.has(deal.id);
@@ -440,4 +448,7 @@ function showToast(msg) {
     const t = document.createElement('div');
     t.className = 'bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl z-[9999]';
     t.innerHTML = msg; c.appendChild(t); setTimeout(() => t.remove(), 4000);
+}
+function showComingSoon(featureName) {
+    showToast(`🚀 Abriendo ${featureName}...`);
 }
