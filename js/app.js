@@ -62,8 +62,17 @@ window.onload = async function () {
         renderDealsGrid();
         startCountdowns();
         lucide.createIcons();
+
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.classList.add('opacity-0', '-translate-y-full');
+                setTimeout(() => splash.remove(), 700);
+            }
+        }, 1500);
+
     } catch (error) {
-        console.error("Error cargando los datos:", error);
+        console.error(error);
         showToast("Error conectando con el servidor API.");
     }
 
@@ -360,7 +369,6 @@ function renderDealsGrid() {
 
     document.getElementById('deals-count-badge').innerText = filtered.length;
 
-    // Aquí era el crash fatal si empty-state no existía en el HTML
     if (filtered.length === 0) {
         grid.innerHTML = '';
         if (emptyState) {

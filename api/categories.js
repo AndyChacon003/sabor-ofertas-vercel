@@ -1,13 +1,16 @@
 export default function handler(req, res) {
-    const categories = [
-        { id: 'all', label: 'Todos', icon: 'utensils' },
-        { id: 'tacos', label: 'Tacos & Antojitos', icon: 'flame' },
-        { id: 'burgers', label: 'Hamburguesas', icon: 'hamburger' },
-        { id: 'sushi', label: 'Sushi & Asiática', icon: 'fish' },
-        { id: 'pizza', label: 'Pizzas', icon: 'pizza' },
-        { id: 'coffee', label: 'Cafés & Postres', icon: 'coffee' },
-        { id: 'healthy', label: 'Saludable', icon: 'salad' }
-    ];
+    if (req.method !== 'GET') {
+        return res.status(405).json({ message: 'Método no permitido' });
+    }
 
-    res.status(200).json(categories);
+    // Devolvemos las categorías fijas para que la barra de filtros no colapse
+    return res.status(200).json([
+        { id: 'all', label: 'Todos' },
+        { id: 'tacos', label: 'Tacos & Antojitos' },
+        { id: 'hamburguesas', label: 'Hamburguesas' },
+        { id: 'sushi', label: 'Sushi & Asiática' },
+        { id: 'pizzas', label: 'Pizzas' },
+        { id: 'postres', label: 'Cafés & Postres' },
+        { id: 'saludable', label: 'Saludable' }
+    ]);
 }
