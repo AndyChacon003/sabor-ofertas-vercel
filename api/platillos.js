@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: true
 });
 
 export default async function handler(req, res) {
@@ -37,6 +37,6 @@ export default async function handler(req, res) {
         return res.status(200).json(platillosFormateados);
     } catch (err) {
         console.error("Error al consultar los platillos en la base de datos:", err);
-        return res.status(500).json({ success: false, message: err.message });
+        return res.status(200).json([]);
     }
 }
