@@ -6,7 +6,7 @@ let searchQuery = "";
 let favorites = new Set();
 let currentUser = null;
 let isRegisterMode = false;
-let adminUsersData = []; // Variable global para guardar a los usuarios del panel
+let adminUsersData = [];
 
 let categories = [];
 let dealsData = [];
@@ -240,6 +240,7 @@ function renderCart() {
     lucide.createIcons();
 }
 
+// AQUÍ ESTÁ LA NUEVA SIMULACIÓN DE MERCADO PAGO
 function checkout() {
     if (cart.length === 0) return showToast("⚠️ Tu carrito está vacío.");
     if (!currentUser) {
@@ -248,8 +249,17 @@ function checkout() {
         toggleAuthModal();
         return;
     }
-    showToast("💳 Redirigiendo a pasarela de pago segura...");
-    cart = []; updateCartCounter(); toggleCartDrawer();
+
+    showToast("💳 Conectando con Mercado Pago...");
+    const btn = document.querySelector('#cart-drawer button[onclick="checkout()"]');
+    btn.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Procesando...';
+    btn.disabled = true;
+
+    setTimeout(() => {
+        cart = [];
+        updateCartCounter();
+        window.location.href = '/pago-exitoso.html';
+    }, 1500);
 }
 
 function toggleAuthModal() {
@@ -466,8 +476,6 @@ function showComingSoon(featureName) {
     showToast(`🚀 Abriendo ${featureName}...`);
 }
 
-// FUNCIONES DEL PANEL ADMIN MEJORADO
-
 async function openAdminPanel() {
     toggleAuthModal();
     showToast("Descargando base de datos...");
@@ -478,11 +486,10 @@ async function openAdminPanel() {
 
         renderAdminUsers(adminUsersData);
 
-        // Agregar escucha al buscador en tiempo real
         const searchInput = document.getElementById('admin-search-input');
         searchInput.removeEventListener('input', filterAdminUsers);
         searchInput.addEventListener('input', filterAdminUsers);
-        searchInput.value = ''; // Limpiar búsqueda anterior
+        searchInput.value = '';
 
         document.getElementById('admin-modal').classList.replace('hidden', 'flex');
         lucide.createIcons();
@@ -536,11 +543,9 @@ async function toggleUserBan(userId, isCurrentlyBanned) {
 
         const data = await res.json();
         if (data.success) {
-            // Actualizar arreglo local para no tener que recargar toda la base
             const user = adminUsersData.find(u => u.id === userId);
             if (user) user.banned = newStatus;
 
-            // Volver a dibujar respetando el buscador
             const searchInput = document.getElementById('admin-search-input');
             if (searchInput.value) {
                 filterAdminUsers({ target: { value: searchInput.value } });
