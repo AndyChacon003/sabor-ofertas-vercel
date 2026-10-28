@@ -322,6 +322,10 @@ function updateAuthUI() {
         document.getElementById('display-user-name').innerText = currentUser.name;
         document.getElementById('display-user-email').innerText = currentUser.email;
         document.getElementById('user-avatar-initials').innerText = currentUser.name.substring(0, 2).toUpperCase();
+
+        const adminBtn = document.getElementById('admin-panel-btn');
+        if (adminBtn) adminBtn.classList.toggle('hidden', currentUser.role !== 'admin');
+
     } else {
         document.getElementById('auth-btn-text').innerText = 'Iniciar Sesión';
         document.getElementById('auth-modal-title').innerText = 'Iniciar Sesión';
@@ -459,4 +463,32 @@ function showToast(msg) {
 }
 function showComingSoon(featureName) {
     showToast(`🚀 Abriendo ${featureName}...`);
+}
+
+async function openAdminPanel() {
+    toggleAuthModal();
+    showToast("Descargando base de datos...");
+
+    try {
+        const res = await fetch('/api/admin-users');
+        const users = await res.json();
+
+        document.getElementById('admin-users-list').innerHTML = users.map(u => `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-4 py-3 font-bold text-slate-800">${u.nombre}</td>
+                <td class="px-4 py-3 text-slate-500">${u.correo}</td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded text-[10px] font-black ${u.rol === 'admin' ? 'bg-purple-100 text-purple-700' : (u.rol === 'negocio' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600')} uppercase">${u.rol || 'cliente'}</span>
+                </td>
+                <td class="px-4 py-3">
+                    ${u.email_verified ? '<span class="text-green-500 font-bold"><i data-lucide="check-circle" class="w-4 h-4 inline"></i> Activo</span>' : '<span class="text-amber-500 font-bold"><i data-lucide="clock" class="w-4 h-4 inline"></i> Pendiente</span>'}
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('admin-modal').classList.replace('hidden', 'flex');
+        lucide.createIcons();
+    } catch (err) {
+        showToast("Error al cargar el panel de administrador");
+    }
 }
