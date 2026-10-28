@@ -6,6 +6,7 @@ let searchQuery = "";
 let favorites = new Set();
 let currentUser = null;
 let isRegisterMode = false;
+let adminUsersData = []; // Variable global para guardar a los usuarios del panel
 
 let categories = [];
 let dealsData = [];
@@ -465,30 +466,93 @@ function showComingSoon(featureName) {
     showToast(`🚀 Abriendo ${featureName}...`);
 }
 
+// FUNCIONES DEL PANEL ADMIN MEJORADO
+
 async function openAdminPanel() {
     toggleAuthModal();
     showToast("Descargando base de datos...");
 
     try {
         const res = await fetch('/api/admin-users');
-        const users = await res.json();
+        adminUsersData = await res.json();
 
-        document.getElementById('admin-users-list').innerHTML = users.map(u => `
-            <tr class="hover:bg-slate-50 transition-colors">
-                <td class="px-4 py-3 font-bold text-slate-800">${u.nombre}</td>
-                <td class="px-4 py-3 text-slate-500">${u.correo}</td>
-                <td class="px-4 py-3">
-                    <span class="px-2 py-1 rounded text-[10px] font-black ${u.rol === 'admin' ? 'bg-purple-100 text-purple-700' : (u.rol === 'negocio' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600')} uppercase">${u.rol || 'cliente'}</span>
-                </td>
-                <td class="px-4 py-3">
-                    ${u.email_verified ? '<span class="text-green-500 font-bold"><i data-lucide="check-circle" class="w-4 h-4 inline"></i> Activo</span>' : '<span class="text-amber-500 font-bold"><i data-lucide="clock" class="w-4 h-4 inline"></i> Pendiente</span>'}
-                </td>
-            </tr>
-        `).join('');
+        renderAdminUsers(adminUsersData);
+
+        // Agregar escucha al buscador en tiempo real
+        const searchInput = document.getElementById('admin-search-input');
+        searchInput.removeEventListener('input', filterAdminUsers);
+        searchInput.addEventListener('input', filterAdminUsers);
+        searchInput.value = ''; // Limpiar búsqueda anterior
 
         document.getElementById('admin-modal').classList.replace('hidden', 'flex');
         lucide.createIcons();
     } catch (err) {
         showToast("Error al cargar el panel de administrador");
+    }
+}
+
+function filterAdminUsers(e) {
+    const query = e.target.value.toLowerCase();
+    const filtered = adminUsersData.filter(u =>
+        u.nombre.toLowerCase().includes(query) ||
+        u.correo.toLowerCase().includes(query)
+    );
+    renderAdminUsers(filtered);
+}
+
+function renderAdminUsers(users) {
+    document.getElementById('admin-users-list').innerHTML = users.map(u => `
+        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 ${u.banned ? 'opacity-50' : ''}">
+            <td class="px-4 py-3 font-bold text-slate-800">${u.nombre}</td>
+            <td class="px-4 py-3 text-slate-500">${u.correo}</td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-1 rounded text-[10px] font-black ${u.rol === 'admin' ? 'bg-purple-100 text-purple-700' : (u.rol === 'negocio' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600')} uppercase">${u.rol || 'cliente'}</span>
+            </td>
+            <td class="px-4 py-3">
+                ${u.banned ? '<span class="text-red-500 font-bold"><i data-lucide="ban" class="w-4 h-4 inline"></i> Suspendido</span>' : (u.email_verified ? '<span class="text-green-500 font-bold"><i data-lucide="check-circle" class="w-4 h-4 inline"></i> Activo</span>' : '<span class="text-amber-500 font-bold"><i data-lucide="clock" class="w-4 h-4 inline"></i> Pendiente</span>')}
+            </td>
+            <td class="px-4 py-3 text-center">
+                ${u.rol === 'admin' ? '<span class="text-slate-300 text-[10px] font-bold uppercase tracking-wider">Intocable</span>' :
+            `<button onclick="toggleUserBan(${u.id}, ${u.banned})" class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-wider font-black transition-colors ${u.banned ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
+                      ${u.banned ? 'Restaurar' : 'Banear'}
+                   </button>`
+        }
+            </td>
+        </tr>
+    `).join('');
+    lucide.createIcons();
+}
+
+async function toggleUserBan(userId, isCurrentlyBanned) {
+    const newStatus = !isCurrentlyBanned;
+
+    try {
+        showToast("Procesando actualización...");
+        const res = await fetch('/api/admin-ban', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, banStatus: newStatus })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            // Actualizar arreglo local para no tener que recargar toda la base
+            const user = adminUsersData.find(u => u.id === userId);
+            if (user) user.banned = newStatus;
+
+            // Volver a dibujar respetando el buscador
+            const searchInput = document.getElementById('admin-search-input');
+            if (searchInput.value) {
+                filterAdminUsers({ target: { value: searchInput.value } });
+            } else {
+                renderAdminUsers(adminUsersData);
+            }
+
+            showToast(newStatus ? '🚫 Usuario suspendido' : '✅ Usuario restaurado exitosamente');
+        } else {
+            showToast('❌ Error al actualizar el usuario');
+        }
+    } catch (e) {
+        showToast('❌ Error de conexión al servidor');
     }
 }

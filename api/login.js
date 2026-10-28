@@ -20,6 +20,11 @@ export default async function handler(req, res) {
 
         const usuario = result.rows[0];
 
+        // BLOQUEO DE BANEADOS
+        if (usuario.banned) {
+            return res.status(403).json({ success: false, message: 'Esta cuenta ha sido suspendida permanentemente.' });
+        }
+
         const passwordCorrecto = await bcrypt.compare(password, usuario.password);
         if (!passwordCorrecto) {
             return res.status(401).json({ success: false, message: 'Credenciales inválidas' });

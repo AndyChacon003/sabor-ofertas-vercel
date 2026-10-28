@@ -259,27 +259,39 @@
         </div>
     </div>
 
-    <!-- Modal Admin -->
+    <!-- Modal Admin Mejorado -->
     <div id="admin-modal"
         class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150] items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-3xl shadow-2xl h-[80vh] flex flex-col">
-            <div class="flex justify-between items-center mb-6">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-4xl shadow-2xl h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
                 <h3 class="font-extrabold text-2xl text-slate-800 flex items-center gap-2">👑 Centro de Control</h3>
                 <button onclick="document.getElementById('admin-modal').classList.replace('flex', 'hidden')"
                     class="p-2 bg-slate-100 rounded-full hover:bg-slate-200"><i data-lucide="x"
                         class="w-5 h-5"></i></button>
             </div>
-            <div class="overflow-x-auto flex-1">
+
+            <!-- Buscador de Usuarios -->
+            <div class="mb-4 relative">
+                <input type="text" id="admin-search-input"
+                    placeholder="Buscar usuario por nombre o correo electrónico..."
+                    class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none transition-all shadow-sm">
+                <i data-lucide="search" class="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400"></i>
+            </div>
+
+            <div class="overflow-x-auto flex-1 border border-slate-100 rounded-xl bg-white shadow-inner">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                    <thead
+                        class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 shadow-sm">
                         <tr>
-                            <th class="px-4 py-3 rounded-tl-xl">Nombre</th>
+                            <th class="px-4 py-3">Nombre</th>
                             <th class="px-4 py-3">Correo</th>
                             <th class="px-4 py-3">Rol</th>
-                            <th class="px-4 py-3 rounded-tr-xl">Estado</th>
+                            <th class="px-4 py-3">Estado</th>
+                            <th class="px-4 py-3 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="admin-users-list" class="divide-y divide-slate-100">
+                        <!-- Los usuarios se inyectarán aquí -->
                     </tbody>
                 </table>
             </div>
